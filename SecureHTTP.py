@@ -40,17 +40,17 @@ from Crypto import Random
 from Crypto.Cipher import AES
 from Crypto.PublicKey import RSA
 
-
 __version__ = "0.1.0"
-__author__ = "staugur"
-__email__ = "staugur@saintic.com"
+__author__ = "staugur <staugur@saintic.com>"
 __all__ = ["RSAEncrypt", "RSADecrypt", "AESEncrypt", "AESDecrypt", "EncryptedCommunicationClient", "EncryptedCommunicationServer", "generate_rsa_keys"]
 
 PY2 = sys.version_info[0] == 2
 if PY2:
     string_types = (str, unicode)
+    public_key_prefix = u"-----BEGIN RSA PUBLIC KEY-----"
 else:
     string_types = (str,)
+    public_key_prefix = b"-----BEGIN RSA PUBLIC KEY-----"
 
 
 def generate_rsa_keys(length=1024, incall=False):
@@ -95,7 +95,7 @@ def RSAEncrypt(pubkey, plaintext):
 
     :returns: base64编码的字符串
     """
-    if pubkey and pubkey.startswith("-----BEGIN RSA PUBLIC KEY-----"):
+    if pubkey and pubkey.startswith(public_key_prefix):
         pubkey = rsa.PublicKey.load_pkcs1(pubkey)
     else:
         # load_pkcs1_openssl_pem可以加载openssl生成的pkcs1公钥(实为pkcs8格式)

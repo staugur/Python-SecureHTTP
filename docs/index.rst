@@ -12,7 +12,10 @@ Python-SecureHTTP
 通过使用RSA+AES让HTTP传输更加安全，即C/S架构的加密通信! (Make HTTP transmissions more secure via RSA+AES, encrypted communication for C/S architecture.)
 
 
-加密传输通信的流程::
+加密传输通信的流程
+-------------------
+
+::
 
     客户端上传数据加密 ==> 服务端获取数据解密 ==> 服务端返回数据加密 ==> 客户端获取数据解密
 
@@ -41,6 +44,12 @@ Python-SecureHTTP
 
         1. 客户端获取到数据后通过key为data得到服务器返回的已经加密的数据AESEncryptedResponseData
         2. 对AESEncryptedResponseData使用AESKey进行解密，得到明文服务器返回的数据。
+
+简单示例
+---------
+
+`点击这里查看简单示例 <https://github.com/staugur/Python-SecureHTTP/blob/master/examples/Demo/>`_
+
 
 -----------------
 API Documentation
