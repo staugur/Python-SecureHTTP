@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+</head>
+<body>
+
+<div id="output"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.2/rollups/hmac-sha256.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.2/components/enc-base64-min.js"></script>
+
+<script>
+var hash = CryptoJS.HmacSHA256("Message", "secret");
+//base64编码
+//hash = CryptoJS.enc.Base64.stringify(hash);
+document.getElementById('output').innerHTML = hash;
+</script>
+</body>
+</html>

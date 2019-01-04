@@ -1,0 +1,6 @@
+flask>=0.9
+sphinx
+sphinx_rtd_theme
+codecov
+rsa>=4.0
+pycrypto>=2.6.1

@@ -1,0 +1,14 @@
+language: python
+env:
+  - CODECOV_TOKEN="78122297-784f-499a-9ca4-40730d367d06"
+python:
+  - "2.7"
+  - "pypy"
+sudo: enabled
+install:
+  - pip install -U setuptools twine wheel flask codecov rsa pycrypto
+  - make dev
+script:
+  - coverage run setup.py test
+after_success:
+  - codecov

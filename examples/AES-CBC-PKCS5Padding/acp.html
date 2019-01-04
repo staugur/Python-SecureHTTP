@@ -1,0 +1,59 @@
+<!DOCTYPE HTML>
+<HTML>
+
+<HEAD>
+    <TITLE>AES加密解密</TITLE>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <script type="text/javascript" src="https://static.saintic.com/cdn/js/aes/jquery1.4.js"></script>
+    <script type="text/javascript" src="https://static.saintic.com/cdn/js/aes/crypto-js.js"></script>
+    <script type="text/javascript" src="https://static.saintic.com/cdn/js/aes/jquery.base64.min.js"></script>
+</HEAD>
+<script type="text/javascript">
+    var key = CryptoJS.enc.Utf8.parse("secretsecretsecr");
+    /**
+     * [encrypt 加密]
+     * @return {[type]} [description]
+     */
+    function encrypt() {
+        var content = $("#encryptContent").val();
+        console.log("content", content)
+        var encryptResult = CryptoJS.AES.encrypt(content, key, {
+            iv: key,
+            mode: CryptoJS.mode.CBC,
+            padding: CryptoJS.pad.Pkcs7
+        });
+        $("#encryptResult").val(encryptResult);
+    }
+
+    /**
+     * [decrypt 解密]
+     * @return {[type]} [description]
+     */
+    function decrypt() {
+        var content = $("#decryptContent").val();
+        var bytes = CryptoJS.AES.decrypt(content.toString(), key, {
+            iv: key,
+            mode: CryptoJS.mode.CBC,
+            padding: CryptoJS.pad.Pkcs7
+        });
+        var decryptResult = bytes.toString(CryptoJS.enc.Utf8);
+        $("#decryptResult").val(decryptResult);
+    }
+
+
+
+</script>
+
+<BODY>
+    加密文本:
+    <input type="text" id="encryptContent" value="Message" />
+    <input type="button" value="AES加密" onclick="encrypt()" />  加密结果:
+    <input type="text" id="encryptResult" />
+    <br/>
+    <br/> 解密文本:
+    <input type="text" id="decryptContent" />
+    <input type="button" value="AES解密" onclick="decrypt()" />  解密结果:
+    <input type="text" id="decryptResult" />
+</BODY>
+
+</HTML>
