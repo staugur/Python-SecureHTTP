@@ -5,7 +5,7 @@ python:
   - "2.7"
 sudo: enabled
 install:
-  - pip install -U setuptools twine wheel flask codecov
+  - pip install -U setuptools twine wheel flask codecov rsa>=4.0 pycrypto>=2.6.1
   - make dev
 script:
   - coverage run setup.py test
