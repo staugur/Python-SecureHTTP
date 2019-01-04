@@ -15,6 +15,10 @@ Python-SecureHTTP
 
     $ pip install Python-SecureHTTP
 
+示例(Demo)
+
+`点击这里查看简单示例 <https://github.com/staugur/Python-SecureHTTP/blob/master/examples/Demo/>`_
+
 文档(Documentation)
 ~~~~~~~~~~~~~~~~~~~
 

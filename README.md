@@ -22,9 +22,14 @@ $ pip install -U git+https://github.com/staugur/Python-SecureHTTP.git
 $ make test
 ```
 
-使用(Usage)
+示例(Demo)
 
 [这是一个简单示例](https://github.com/staugur/Python-SecureHTTP/blob/master/examples/Demo/)
+
+
+### 文档(Documentation)
+
+* [中文](https://python-securehttp.readthedocs.io/zh_CN/latest/)
 
 
 ### 资源(Resources)
@@ -32,11 +37,6 @@ $ make test
 * GitHub [https://github.com/staugur/Python-SecureHTTP](https://github.com/staugur/Python-SecureHTTP "https://github.com/staugur/Python-SecureHTTP")
 * Author [https://www.saintic.com](https://www.saintic.com "https://www.saintic.com")
 * Issues [https://github.com/staugur/Python-SecureHTTP/issues](https://github.com/staugur/Python-SecureHTTP/issues "https://github.com/staugur/Python-SecureHTTP/issues")
-
-
-### 文档(Documentation)
-
-* [中文](https://python-securehttp.readthedocs.io/zh_CN/latest/)
 
 
 ### 说在后面(END)

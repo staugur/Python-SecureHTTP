@@ -17,7 +17,7 @@ Python-SecureHTTP
 
 ::
 
-    客户端上传数据加密 ==> 服务端获取数据解密 ==> 服务端返回数据加密 ==> 客户端获取数据解密
+    总体流程：客户端上传数据加密 ==> 服务端获取数据解密 ==> 服务端返回数据加密 ==> 客户端获取数据解密
 
     NO.1 客户端上传数据加密流程::
 
@@ -44,6 +44,7 @@ Python-SecureHTTP
 
         1. 客户端获取到数据后通过key为data得到服务器返回的已经加密的数据AESEncryptedResponseData
         2. 对AESEncryptedResponseData使用AESKey进行解密，得到明文服务器返回的数据。
+
 
 简单示例
 ---------
@@ -81,3 +82,9 @@ CLI Documentation
 
     generate_rsa_keys.sh 2048
 
+
+--------
+更新日志
+--------
+
+.. include:: ../CHANGELOG.rst

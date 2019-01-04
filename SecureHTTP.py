@@ -44,6 +44,7 @@ __version__ = "0.1.0"
 __author__ = "staugur <staugur@saintic.com>"
 __all__ = ["RSAEncrypt", "RSADecrypt", "AESEncrypt", "AESDecrypt", "EncryptedCommunicationClient", "EncryptedCommunicationServer", "generate_rsa_keys"]
 
+
 PY2 = sys.version_info[0] == 2
 if PY2:
     string_types = (str, unicode)
@@ -223,7 +224,7 @@ class EncryptedCommunicationMix(object):
 
 
 class EncryptedCommunicationClient(EncryptedCommunicationMix):
-    """客户端：主要是公钥加密-"""
+    """客户端：主要是公钥加密"""
 
     def clientEncrypt(self, AESKey, pubkey, post):
         """客户端发起加密请求通信 for NO.1
@@ -234,7 +235,7 @@ class EncryptedCommunicationClient(EncryptedCommunicationMix):
 
         :param post: dict: 请求的数据
 
-        :returns:
+        :returns: dict: {key=RSAKey, value=加密数据}
         """
         # 深拷贝post
         postData = copy.deepcopy(post)
@@ -249,7 +250,14 @@ class EncryptedCommunicationClient(EncryptedCommunicationMix):
         return dict(key=RSAKey, value=JsonAESEncryptedData)
 
     def clientDecrypt(self, AESKey, encryptedRespData):
-        """客户端获取服务端返回的加密数据并解密 for NO.4"""
+        """客户端获取服务端返回的加密数据并解密 for NO.4
+
+        :param AESKey: str: 之前生成的AESKey
+
+        :param encryptedRespData: dict: 服务端返回的加密数据，其格式应该是 {data: AES加密数据}
+
+        :returns: 解密验签成功后，返回服务端的消息原文
+        """
         if encryptedRespData and isinstance(encryptedRespData, dict):
             JsonAESEncryptedData = encryptedRespData["data"]
             respData = json.loads(AESDecrypt(AESKey, JsonAESEncryptedData))
@@ -269,7 +277,7 @@ class EncryptedCommunicationServer(EncryptedCommunicationMix):
 
         :param postData: dict: 请求的数据
 
-        :returns:
+        :returns: tuple: 解密后的请求数据原文和AESKey(用以在返回数据时加密)
         """
         if privkey and encryptedPostData and isinstance(encryptedPostData, dict):
             RSAKey = encryptedPostData["key"]
@@ -282,7 +290,14 @@ class EncryptedCommunicationServer(EncryptedCommunicationMix):
                 return postData, AESKey
 
     def serverEncrypt(self, AESKey, resp):
-        """服务端返回加密数据 for NO.3"""
+        """服务端返回加密数据 for NO.3
+
+        :param AESKey: str: 服务端解密时返回的AESKey，即客户端加密时自主生成的AES密钥
+
+        :param resp: dict: 服务端返回的数据，目前仅支持dict
+
+        :returns: dict: 返回dict，格式是 {data: AES加密数据}
+        """
         if AESKey and resp and isinstance(resp, dict):
             respData = copy.deepcopy(resp)
             SignData = self.sign(respData)
