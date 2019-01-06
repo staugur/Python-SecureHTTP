@@ -207,18 +207,34 @@ class EncryptedCommunicationMix(object):
         """生成AES密钥：32位"""
         return self.md5(Random.new().read(AES.block_size))
 
-    def sign(self, parameters):
+    def sign(self, parameters, index=None):
         """ 参数签名
-        @param parameters dict: 请求参数或提交的数据
+
+        :param parameters: dict: 请求参数或提交的数据
+
+        :param index: tuple,list: 参与排序加签的键名，None时表示不加签
+
+        :returns: str: md5 message
         """
         if not isinstance(parameters, dict):
             return
+        if index:
+            if isinstance(index, (tuple, list)):
+                data = dict()
+                for k in index:
+                    data[k] = parameters[k]
+                parameters = data
+            else:
+                return
+        else:
+            return self.md5("&".join(sorted(parameters.keys())))
         # NO.1 参数排序
         _my_sorted = sorted(parameters.items(), key=lambda parameters: parameters[0])
         # NO.2 排序后拼接字符串
         canonicalizedQueryString = ''
         for (k, v) in _my_sorted:
             canonicalizedQueryString += '{}={}&'.format(k, v)
+        print("sorted: %s" %canonicalizedQueryString)
         # NO.3 加密返回签名: Signature
         return self.md5(canonicalizedQueryString)
 
@@ -244,7 +260,7 @@ class EncryptedCommunicationClient(EncryptedCommunicationMix):
         # 对请求数据签名
         SignData = self.sign(postData)
         # 对请求数据填充额外信息
-        postData.update(__meta__=dict(Signature=SignData, Timestamp=self.get_current_timestamp()))
+        postData.update(__meta__=dict(Signature=SignData, Timestamp=self.get_current_timestamp(), SignatureVersion="v1", SignatureMethod="MD5"))
         #  使用AES加密请求数据
         JsonAESEncryptedData = AESEncrypt(AESKey, json.dumps(postData))
         return dict(key=RSAKey, value=JsonAESEncryptedData)
@@ -281,11 +297,16 @@ class EncryptedCommunicationServer(EncryptedCommunicationMix):
         """
         if privkey and encryptedPostData and isinstance(encryptedPostData, dict):
             RSAKey = encryptedPostData["key"]
+            print("RSAKey: %s" %RSAKey)
             AESKey = RSADecrypt(privkey, RSAKey)
+            print("AESKey: %s" %AESKey)
             JsonAESEncryptedData = encryptedPostData["value"]
+            print(JsonAESEncryptedData)
             postData = json.loads(AESDecrypt(AESKey, JsonAESEncryptedData))
+            print("postdata: %s" %postData)
             metaData = postData.pop("__meta__")
             SignData = self.sign(postData)
+            print("SignData: %s" %SignData)
             if metaData["Signature"] == SignData:
                 return postData, AESKey
 
