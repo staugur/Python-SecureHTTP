@@ -21,7 +21,7 @@
 
     3. 签名::
 
-        对请求参数或数据排序后再使用MD5签名
+        对请求参数或数据添加公共参数后排序再使用MD5签名
 
     :copyright: (c) 2018 by staugur.
     :license: MIT, see LICENSE for more details.
@@ -33,14 +33,15 @@ import rsa
 import json
 import time
 import copy
-import hashlib
 import base64
+import urllib
+import hashlib
 from operator import mod
 from Crypto import Random
 from Crypto.Cipher import AES
 from Crypto.PublicKey import RSA
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 __author__ = "staugur <staugur@saintic.com>"
 __all__ = ["RSAEncrypt", "RSADecrypt", "AESEncrypt", "AESDecrypt", "EncryptedCommunicationClient", "EncryptedCommunicationServer", "generate_rsa_keys"]
 
@@ -52,6 +53,15 @@ if PY2:
 else:
     string_types = (str,)
     public_key_prefix = b"-----BEGIN RSA PUBLIC KEY-----"
+
+
+class SecureHTTPException(Exception):
+    pass
+
+
+class SignError(SecureHTTPException):
+    """签名错误：加签异常、验签不匹配等"""
+    pass
 
 
 def generate_rsa_keys(length=1024, incall=False):
@@ -191,8 +201,9 @@ class EncryptedCommunicationMix(object):
     """
 
     def get_current_timestamp(self):
-        """ 获取本地时间戳(10位): Unix timestamp：是从1970年1月1日（UTC/GMT的午夜）开始所经过的秒数，不考虑闰秒 """
-        return int(time.time())
+        """ UTC时间 """
+        return 'timestamp'
+        return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
 
     def md5(self, message):
         """MD5签名
@@ -207,121 +218,187 @@ class EncryptedCommunicationMix(object):
         """生成AES密钥：32位"""
         return self.md5(Random.new().read(AES.block_size))
 
-    def sign(self, parameters, index=None):
-        """ 参数签名
+    def conversionComma(self, comma_str):
+        """将字符串comma_str使用正则以逗号分隔
+
+        :param comma_str: str: 要分隔的字符串，以英文逗号分隔
+
+        :return: list
+        """
+        if comma_str and isinstance(comma_str, string_types):
+            comma_pat = re.compile(r"\s*,\s*")
+            return [i for i in comma_pat.split(comma_str) if i]
+        else:
+            return tuple()
+
+    def sign(self, parameters, meta={}):
+        """ 参数签名，目前版本请勿嵌套无序数据类型（如嵌套dict、嵌套list中嵌套dict），否则可能造成签名失败！
 
         :param parameters: dict: 请求参数或提交的数据
 
-        :param index: tuple,list: 参与排序加签的键名，None时表示不加签
+        :param meta: dict: 公共元数据，参与排序加签
 
-        :returns: str: md5 message
+        :raises: TypeError
+
+        :returns: md5 message(str) or None
         """
-        if not isinstance(parameters, dict):
-            return
-        if index:
-            if isinstance(index, (tuple, list)):
-                data = dict()
-                for k in index:
-                    data[k] = parameters[k]
-                parameters = data
-            else:
+        if isinstance(parameters, dict) and isinstance(meta, dict):
+            signIndex = meta.get("SignatureIndex", None)
+            # 重新定义要加签的dict
+            if signIndex is False:
                 return
+            elif signIndex and isinstance(signIndex, string_types):
+                signIndex = self.conversionComma(signIndex)
+                data = dict()
+                for k in signIndex:
+                    data[k] = parameters[k]
+            else:
+                data = copy.deepcopy(parameters)
+            # 追加公共参数
+            for k, v in meta.iteritems():
+                data[k] = v
+            # NO.1 参数排序
+            _my_sorted = sorted(data.items(), key=lambda data: data[0])
+            # NO.2 排序后拼接字符串
+            canonicalizedQueryString = ''
+            for (k, v) in _my_sorted:
+                canonicalizedQueryString += '{}={}&'.format(self._percent_encode(k), self._percent_encode(v))
+            # NO.3 加密返回签名: Signature
+            return self.md5(canonicalizedQueryString)
         else:
-            return self.md5("&".join(sorted(parameters.keys())))
-        # NO.1 参数排序
-        _my_sorted = sorted(parameters.items(), key=lambda parameters: parameters[0])
-        # NO.2 排序后拼接字符串
-        canonicalizedQueryString = ''
-        for (k, v) in _my_sorted:
-            canonicalizedQueryString += '{}={}&'.format(k, v)
-        print("sorted: %s" %canonicalizedQueryString)
-        # NO.3 加密返回签名: Signature
-        return self.md5(canonicalizedQueryString)
+            raise TypeError("Invalid sign parameters or meta")
+
+    def _percent_encode(self, encodeStr):
+        try:
+            encodeStr = json.dumps(encodeStr)
+        except:
+            raise
+        if sys.stdin.encoding is None:
+            res = urllib.quote(encodeStr.decode('utf-8').encode('utf-8'), '')
+        else:
+            res = urllib.quote(encodeStr.decode(sys.stdin.encoding).encode('utf8'), '')
+        res = res.replace('+', '%20')
+        res = res.replace('*', '%2A')
+        res = res.replace('%7E', '~')
+        return res
 
 
 class EncryptedCommunicationClient(EncryptedCommunicationMix):
     """客户端：主要是公钥加密"""
 
-    def clientEncrypt(self, AESKey, pubkey, post):
+    def __init__(self, PublicKey):
+        """初始化客户端请求类
+
+        :param PublicKey: str: RSA的pkcs1或pkcs8格式公钥
+        """
+        self.AESKey = self.genAesKey()
+        self.PublicKey = PublicKey
+
+    def clientEncrypt(self, post, signIndex=None):
         """客户端发起加密请求通信 for NO.1
 
-        :param AESKey: str: AES密钥，使用genAesKey方法生成
-
-        :param pubkey: str: RSA的pkcs1或pkcs8格式公钥
-
         :param post: dict: 请求的数据
+
+        :param signIndex: str: 参与排序加签的键名，False表示不签名，None时表示加签post中所有数据，非空时请用逗号分隔键名(字符串)
 
         :returns: dict: {key=RSAKey, value=加密数据}
         """
         # 深拷贝post
         postData = copy.deepcopy(post)
         # 使用RSA公钥加密AES密钥获取RSA密文作为密钥
-        RSAKey = RSAEncrypt(pubkey, AESKey)
+        RSAKey = RSAEncrypt(self.PublicKey, self.AESKey)
+        # 定义元数据
+        metaData = dict(Timestamp=self.get_current_timestamp(), SignatureVersion="v1", SignatureMethod="MD5", SignatureIndex=signIndex)
         # 对请求数据签名
-        SignData = self.sign(postData)
-        # 对请求数据填充额外信息
-        postData.update(__meta__=dict(Signature=SignData, Timestamp=self.get_current_timestamp(), SignatureVersion="v1", SignatureMethod="MD5"))
+        metaData.update(Signature=self.sign(postData, metaData))
+        # 对请求数据填充元信息
+        postData.update(__meta__=metaData)
         #  使用AES加密请求数据
-        JsonAESEncryptedData = AESEncrypt(AESKey, json.dumps(postData))
+        JsonAESEncryptedData = AESEncrypt(self.AESKey, json.dumps(postData, separators=(',', ':')))
         return dict(key=RSAKey, value=JsonAESEncryptedData)
 
-    def clientDecrypt(self, AESKey, encryptedRespData):
+    def clientDecrypt(self, encryptedRespData):
         """客户端获取服务端返回的加密数据并解密 for NO.4
-
-        :param AESKey: str: 之前生成的AESKey
 
         :param encryptedRespData: dict: 服务端返回的加密数据，其格式应该是 {data: AES加密数据}
 
+        :raises: TypeError,SignError
+
         :returns: 解密验签成功后，返回服务端的消息原文
         """
-        if encryptedRespData and isinstance(encryptedRespData, dict):
+        if encryptedRespData and isinstance(encryptedRespData, dict) and \
+                "data" in encryptedRespData:
             JsonAESEncryptedData = encryptedRespData["data"]
-            respData = json.loads(AESDecrypt(AESKey, JsonAESEncryptedData))
+            respData = json.loads(AESDecrypt(self.AESKey, JsonAESEncryptedData))
             metaData = respData.pop("__meta__")
-            SignData = self.sign(respData)
-            if metaData["Signature"] == SignData:
+            Signature = metaData.pop("Signature")
+            SignData = self.sign(respData, metaData)
+            if Signature == SignData:
                 return respData
+            else:
+                raise SignError("Signature verification failed")
+        else:
+            raise TypeError("Invalid encrypted resp data")
 
 
 class EncryptedCommunicationServer(EncryptedCommunicationMix):
     """服务端：主要是私钥解密"""
 
-    def serverDecrypt(self, privkey, encryptedPostData):
+    def __init__(self, PrivateKey):
+        """初始化服务端响应类
+
+        :param PrivateKey: str: pkcs1格式私钥
+        """
+        self.PrivateKey = PrivateKey
+        # AESKey是服务端解密时解码的AESKey，即客户端加密时自主生成的AES密钥
+        self.AESKey = None
+
+    def serverDecrypt(self, encryptedPostData):
         """服务端获取请求数据并解密 for NO.2
 
-        :param pubkey: str: RSA的pkcs1或pkcs8格式公钥
+        :param encryptedPostData: dict: 请求的加密数据
 
-        :param postData: dict: 请求的数据
+        :raises: TypeError,SignError
 
-        :returns: tuple: 解密后的请求数据原文和AESKey(用以在返回数据时加密)
+        :returns: 解密后的请求数据原文
         """
-        if privkey and encryptedPostData and isinstance(encryptedPostData, dict):
+        if encryptedPostData and isinstance(encryptedPostData, dict) and \
+            "key" in encryptedPostData and \
+                "value" in encryptedPostData:
             RSAKey = encryptedPostData["key"]
-            print("RSAKey: %s" %RSAKey)
-            AESKey = RSADecrypt(privkey, RSAKey)
-            print("AESKey: %s" %AESKey)
+            self.AESKey = RSADecrypt(self.PrivateKey, RSAKey)
             JsonAESEncryptedData = encryptedPostData["value"]
-            print(JsonAESEncryptedData)
-            postData = json.loads(AESDecrypt(AESKey, JsonAESEncryptedData))
-            print("postdata: %s" %postData)
+            postData = json.loads(AESDecrypt(self.AESKey, JsonAESEncryptedData))
             metaData = postData.pop("__meta__")
-            SignData = self.sign(postData)
-            print("SignData: %s" %SignData)
-            if metaData["Signature"] == SignData:
-                return postData, AESKey
+            Signature = metaData.pop("Signature")
+            SignData = self.sign(postData, metaData)
+            if Signature == SignData:
+                return postData
+            else:
+                raise SignError("Signature verification failed")
+        else:
+            raise TypeError("Invalid encrypted post data")
 
-    def serverEncrypt(self, AESKey, resp):
+    def serverEncrypt(self, resp, signIndex=None):
         """服务端返回加密数据 for NO.3
-
-        :param AESKey: str: 服务端解密时返回的AESKey，即客户端加密时自主生成的AES密钥
 
         :param resp: dict: 服务端返回的数据，目前仅支持dict
 
+        :param signIndex: tuple,list: 参与排序加签的键名，False表示不签名，None时表示加签resp中所有数据，非空时请用逗号分隔键名(字符串)
+
+        :raises: TypeError,ValueError
+
         :returns: dict: 返回dict，格式是 {data: AES加密数据}
         """
-        if AESKey and resp and isinstance(resp, dict):
-            respData = copy.deepcopy(resp)
-            SignData = self.sign(respData)
-            respData.update(__meta__=dict(Signature=SignData, Timestamp=self.get_current_timestamp()))
-            JsonAESEncryptedData = AESEncrypt(AESKey, json.dumps(respData))
-            return dict(data=JsonAESEncryptedData)
+        if self.AESKey:
+            if resp and isinstance(resp, dict):
+                respData = copy.deepcopy(resp)
+                metaData = dict(Timestamp=self.get_current_timestamp(), SignatureVersion="v1", SignatureMethod="MD5", SignatureIndex=signIndex)
+                metaData.update(Signature=self.sign(respData, metaData))
+                respData.update(__meta__=metaData)
+                JsonAESEncryptedData = AESEncrypt(self.AESKey, json.dumps(respData, separators=(',', ':')))
+                return dict(data=JsonAESEncryptedData)
+            else:
+                raise TypeError("Invalid resp data")
+        else:
+            raise ValueError("Invalid AESKey")

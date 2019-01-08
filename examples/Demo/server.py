@@ -21,21 +21,16 @@ sqgEktcytOWXQ+qnOxKkP9Zk32Zanp5o+CCZJqYiBYU=
 
 @app.route("/", methods=["POST"])
 def index():
-    sc = EncryptedCommunicationServer()
-    print(request.get_json())
-    post = request.json
-    print("server post: %s" %post)
-    print("serverDecrypt: %s" %sc.serverDecrypt(privkey, post))
-    return ""
-
+    sc = EncryptedCommunicationServer(privkey)
+    post = request.form
     try:
-        (data, AESKey) = sc.serverDecrypt(privkey, post)
+        data = sc.serverDecrypt(post)
+        app.logger.debug("客户端请求数据：%s" %data)
     except Exception,e:
     	raise
     else:
-        resp = sc.serverEncrypt(AESKey, data)
+        resp = sc.serverEncrypt(data)
         return jsonify(resp)
-    return jsonify(a=1)
 
 if __name__ == "__main__":
     app.run(port=5000, debug=True)

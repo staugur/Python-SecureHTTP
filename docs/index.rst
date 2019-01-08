@@ -13,7 +13,7 @@ Python-SecureHTTP
 
 
 加密传输通信的流程
--------------------
+------------------
 
 ::
 
@@ -23,7 +23,7 @@ Python-SecureHTTP
 
         1. 客户端随机产生一个16位的字符串，用以之后AES加密的秘钥，AESKey。
         2. 使用RSA对AESKey进行公钥加密，RSAKey。
-        3. 参数加签，规则是：对所有请求或提交的字典参数按key做升序排列并用"参数名=参数值&"形式连接。
+        3. 参数加签，参考"加签、验签规则流程"。
         4. 将明文的要上传的数据包(字典/Map)转为Json字符串，使用AESKey加密，得到JsonAESEncryptedData。
         5. 封装为{key : RSAKey, value : JsonAESEncryptedData}的字典上传服务器，服务器只需要通过key和value，然后解析，获取数据即可。
 
@@ -31,7 +31,7 @@ Python-SecureHTTP
 
         1. 获取到RSAKey后用服务器私钥解密，获取到AESKey
         2. 获取到JsonAESEncriptedData，使用AESKey解密，得到明文的客户端上传上来的数据。
-        3. 验签
+        3. 验签，参考"加签、验签规则流程"
         4. 返回明文数据
 
     NO.3 服务端返回数据加密流程::
@@ -45,6 +45,44 @@ Python-SecureHTTP
         1. 客户端获取到数据后通过key为data得到服务器返回的已经加密的数据AESEncryptedResponseData
         2. 对AESEncryptedResponseData使用AESKey进行解密，得到明文服务器返回的数据。
 
+加签、验签规则流程
+-------------------
+
+::
+
+    @加签、验签规则：
+
+        加签，即`EncryptedCommunicationClient.clientEncrypt`和`EncryptedCommunicationServer.serverEncrypt`方法，签名已经内置，支持传入`signIndex`参数生成不同签名。
+
+        验签，即`EncryptedCommunicationClient.clientDecrypt`和`EncryptedCommunicationServer.serverDecrypt`方法，验签已经内置，验签失败触发`SignError`错误。
+
+        signIndex:
+
+            False, 不签名、不验签
+            None, 签名数据中所有字段(目前版本，如果嵌套了无序数据类型，可能会验签失败)
+            str, 指定参与签名的字段，格式是"key1,key2"，这是目前建议的一种方法，只针对部分核心字段签名和验签
+
+    @签名步骤：
+
+        1. 构造规范化的请求字符串
+
+            按照字母升序，对参数名称进行排序。
+
+        2. 排序后的参数以"参数名=值&"的形式连接，其中参数名和值要进行URL编码，使用UTF-8字符集，编码规则是：
+
+            2.1 对于字符 A-Z、a-z、0-9以及字符“-”、“_”、“.”、“~”不编码；
+            2.2 对于其他字符编码成“%XY”的格式，其中XY是字符对应ASCII码的16进制表示。比如英文的双引号（”）对应的编码就是%22.
+            2.3 英文空格（ ）编码为%20，而不是加号（+）。
+
+        3. 对以上规范化的字符串使用md5得到签名
+
+    @验签步骤：
+
+        验签同签名类似。
+
+    @注意事项：
+
+        签名规则可以参考阿里云API签名
 
 简单示例
 ---------
@@ -57,7 +95,7 @@ API Documentation
 -----------------
 
 .. automodule:: SecureHTTP
-    :members: RSAEncrypt, RSADecrypt, AESEncrypt, AESDecrypt, EncryptedCommunicationClient, EncryptedCommunicationServer, generate_rsa_keys
+    :members: RSAEncrypt, RSADecrypt, AESEncrypt, AESDecrypt, EncryptedCommunicationClient, EncryptedCommunicationServer, generate_rsa_keys, SignError
     :undoc-members:
     :show-inheritance:
     :noindex:

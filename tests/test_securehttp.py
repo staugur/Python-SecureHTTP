@@ -12,10 +12,9 @@ from binascii import b2a_hex, a2b_hex
 class UtilsTest(unittest.TestCase):
 
     def setUp(self):
-        self.debug = True
+        self.debug = False
         self.client = app.test_client()
 
-    """
     def test_AES(self):
         key = "secretsecretsecr"
         to_encrypt = 'Message'
@@ -36,40 +35,35 @@ class UtilsTest(unittest.TestCase):
         ciphertext = RSAEncrypt(pubkey, plaintext)
         to_decrypt = RSADecrypt(privkey, ciphertext)
         self.assertEqual(plaintext, to_decrypt)
-    """
 
     def test_ec(self):
 
-        #post = {u'a': 1, u'c': 3, u'b': 2}
+        post = {u'a': 1, u'c': 3, u'b': 2, u'data': ["a", 1, None]}
         resp = {u'msg': None, u'code': 0}
-        post = {u'images': [{u'startdate': u'20171009', u'urlbase': u'/az/hprichbg/rb/SoyuzReturn_ZH-CN9848773206', u'enddate': u'20171010', u'copyright': u'\u8054\u76df\u53f7\u822a\u5929\u5668\u4e0b\u964d\u6a21\u5757\u8fd4\u56de\u5730\u7403 (\xa9 Bill Ingalls/NASA)', u'url': u'/az/hprichbg/rb/SoyuzReturn_ZH-CN9848773206_1920x1080.jpg', u'hs': [], u'hsh': u'8c4989f0b54d9f847280af90f0ced6d1', u'bot': 1, u'quiz': u'/search?q=Bing+homepage+quiz&filters=WQOskey:%22HPQuiz_20171009_SoyuzReturn%22&FORM=HPQUIZ', u'drk': 1, u'copyrightlink': u'http://www.bing.com/search?q=%E8%88%AA%E5%A4%A9%E5%99%A8&form=hpcapt&mkt=zh-cn', u'wp': True, u'fullstartdate': u'201710091600', u'top': 1}], u'tooltips': {u'previous': u'\u4e0a\u4e00\u4e2a\u56fe\u50cf', u'walls': u'\u4e0b\u8f7d\u4eca\u65e5\u7f8e\u56fe\u3002\u4ec5\u9650\u7528\u4f5c\u684c\u9762\u58c1\u7eb8\u3002', u'loading': u'\u6b63\u5728\u52a0\u8f7d...', u'walle': u'\u6b64\u56fe\u7247\u4e0d\u80fd\u4e0b\u8f7d\u7528\u4f5c\u58c1\u7eb8\u3002', u'next': u'\u4e0b\u4e00\u4e2a\u56fe\u50cf'}}
 
-        client = EncryptedCommunicationClient()
-        server = EncryptedCommunicationServer()
-        AESKey = client.genAesKey()
+        client = EncryptedCommunicationClient(pubkey)
+        server = EncryptedCommunicationServer(privkey)
+
         # NO.1
-        c1 = client.clientEncrypt(AESKey, pubkey, post)
+        c1 = client.clientEncrypt(post)
         if self.debug:
             print("\nNO.1 客户端加密数据：%s" % c1)
         # NO.2
-        (s1, AESKey2) = server.serverDecrypt(privkey, c1)
-        print("s1 AESKey2: %s" %AESKey2)
-        exit()
-        self.assertEqual(AESKey, AESKey2)
+        s1 = server.serverDecrypt(c1)
+        self.assertEqual(client.AESKey, server.AESKey)
         if self.debug:
             print("\nNO.2 服务端解密数据：%s" % s1)
         self.assertEqual(s1, post)
         # NO.3
-        s2 = server.serverEncrypt(AESKey, resp)
+        s2 = server.serverEncrypt(resp, False)
         if self.debug:
             print("\nNO.3 服务端返回加密数据：%s" % s2)
         # NO.4
-        c2 = client.clientDecrypt(AESKey, s2)
+        c2 = client.clientDecrypt(s2)
         if self.debug:
             print("\nNO.4 客户端获取返回数据并解密：%s" % c2)
         self.assertEqual(c2, resp)
 
-    """
     def api2dict(self, res):
         if PY2:
             return json.loads(res)
@@ -78,16 +72,43 @@ class UtilsTest(unittest.TestCase):
 
     def test_web(self):
         post = dict(debug=self.debug)
-        ec = EncryptedCommunicationClient()
-        AESKey = ec.genAesKey()
-        encryptedPost = ec.clientEncrypt(AESKey, pubkey, post)
+        ec = EncryptedCommunicationClient(pubkey)
+        encryptedPost = ec.clientEncrypt(post)
         resp = self.api2dict(self.client.post('/', data=encryptedPost, follow_redirects=True).data)
-        resp = ec.clientDecrypt(AESKey, resp)
+        resp = ec.clientDecrypt(resp)
         if self.debug:
             print("\n返回数据解密：%s" %resp)
         self.assertIsInstance(resp, dict)
         self.assertEqual(resp, post)
-    """
+
+    def test_complicatedEC1(self):
+        post = dict(debug=self.debug)
+        ec = EncryptedCommunicationClient(pubkey)
+        self.assertEqual(ec.sign(post, dict(SignatureIndex=False)), None)
+
+    def test_complicatedEC2(self):
+        post = {"configGlossary:installationAt":"Philadelphia, PA","configGlossary:adminEmail":"ksm@pobox.com","configGlossary:poweredBy":"Cofax","configGlossary:poweredByIcon":"/images/cofax.gif","configGlossary:staticPath":"/content/static","templateProcessorClass":"org.cofax.WysiwygTemplate","templateLoaderClass":"org.cofax.FilesTemplateLoader","templatePath":"templates","templateOverridePath":"","defaultListTemplate":"listTemplate.htm","defaultFileTemplate":"articleTemplate.htm","useJSP":False,"jspListTemplate":"listTemplate.jsp","jspFileTemplate":"articleTemplate.jsp","cachePackageTagsTrack":200,"cachePackageTagsStore":200,"cachePackageTagsRefresh":60,"cacheTemplatesTrack":100,"cacheTemplatesStore":50,"cacheTemplatesRefresh":15,"cachePagesTrack":200,"cachePagesStore":100,"cachePagesRefresh":10,"cachePagesDirtyRead":10,"searchEngineListTemplate":"forSearchEnginesList.htm","searchEngineFileTemplate":"forSearchEngines.htm","searchEngineRobotsDb":"WEB-INF/robots.db","useDataStore":True,"dataStoreClass":"org.cofax.SqlDataStore","redirectionClass":"org.cofax.SqlRedirection","dataStoreName":"cofax","dataStoreDriver":"com.microsoft.jdbc.sqlserver.SQLServerDriver","dataStoreUrl":"jdbc:microsoft:sqlserver://LOCALHOST:1433;DatabaseName=goon","dataStoreUser":"sa","dataStorePassword":"dataStoreTestQuery","dataStoreLogFile":"/usr/local/tomcat/logs/datastore.log","dataStoreInitConns":10,"dataStoreMaxConns":100,"dataStoreConnUsageLimit":100,"dataStoreLogLevel":"debug","maxUrlLength":500,"test-content":None,"test_content2": [1,2,dict(c=3)], "test_content3": 0, "test_content4": dict()}
+        resp = {u'msg': None, u'code': 0}
+
+        client = EncryptedCommunicationClient(pubkey)
+        server = EncryptedCommunicationServer(privkey)
+        s1 = server.serverDecrypt(client.clientEncrypt(post, "configGlossary:installationAt,configGlossary:adminEmail,templateOverridePath,useJSP,cacheTemplatesRefresh,test-content,test_content2,test_content3,test_content4"))
+        c2 = client.clientDecrypt(server.serverEncrypt(resp))
+        self.assertEqual(client.AESKey, server.AESKey)
+        self.assertEqual(s1, post)
+        self.assertEqual(c2, resp)
+
+    def test_complicatedEC3(self):
+        post = {'test_content': None,  'test_content2': ['a', 'b', 'c'], 'test_content3': 0, 'test_content4': {}, 'test_content5': [1, 2, 3]}
+        resp = {u'msg': None, u'code': 0}
+
+        client = EncryptedCommunicationClient(pubkey)
+        server = EncryptedCommunicationServer(privkey)
+        s1 = server.serverDecrypt(client.clientEncrypt(post))
+        c2 = client.clientDecrypt(server.serverEncrypt(resp))
+        self.assertEqual(client.AESKey, server.AESKey)
+        self.assertEqual(s1, post)
+        self.assertEqual(c2, resp)
 
 if __name__ == '__main__':
     unittest.main()

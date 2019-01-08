@@ -10,9 +10,9 @@ app.config['TESTING'] = True
 
 @app.route("/", methods=["POST"])
 def index():
-    sc = EncryptedCommunicationServer()
-    (data, AESKey) = sc.serverDecrypt(privkey, request.form)
-    resp = sc.serverEncrypt(AESKey, data)
+    sc = EncryptedCommunicationServer(privkey)
+    data = sc.serverDecrypt(request.form)
+    resp = sc.serverEncrypt(data)
     return jsonify(resp)
 
 if __name__ == "__main__":
