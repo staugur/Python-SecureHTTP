@@ -27,9 +27,11 @@ test:
 
 publish-test:
 	python setup.py publish --test
+	$(MAKE) clean
 
 publish-release:
 	python setup.py publish --release
+	$(MAKE) clean
 
 html:
 	cd docs && sphinx-build -b html . _build/html

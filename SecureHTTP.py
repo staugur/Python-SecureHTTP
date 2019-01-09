@@ -41,7 +41,7 @@ from Crypto import Random
 from Crypto.Cipher import AES
 from Crypto.PublicKey import RSA
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 __author__ = "staugur <staugur@saintic.com>"
 __all__ = ["RSAEncrypt", "RSADecrypt", "AESEncrypt", "AESDecrypt", "EncryptedCommunicationClient", "EncryptedCommunicationServer", "generate_rsa_keys"]
 
@@ -202,7 +202,6 @@ class EncryptedCommunicationMix(object):
 
     def get_current_timestamp(self):
         """ UTC时间 """
-        return 'timestamp'
         return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
 
     def md5(self, message):
@@ -270,7 +269,7 @@ class EncryptedCommunicationMix(object):
 
     def _percent_encode(self, encodeStr):
         try:
-            encodeStr = json.dumps(encodeStr)
+            encodeStr = json.dumps(encodeStr, sort_keys=True)
         except:
             raise
         if sys.stdin.encoding is None:
@@ -303,6 +302,8 @@ class EncryptedCommunicationClient(EncryptedCommunicationMix):
 
         :returns: dict: {key=RSAKey, value=加密数据}
         """
+        if not (post and isinstance(post, dict)):
+            raise TypeError("Invalid post data")
         # 深拷贝post
         postData = copy.deepcopy(post)
         # 使用RSA公钥加密AES密钥获取RSA密文作为密钥
