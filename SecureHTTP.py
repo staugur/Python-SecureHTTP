@@ -90,7 +90,8 @@ def generate_rsa_keys(length=1024, incall=False):
     private_key = key.exportKey("PEM", pkcs=1)
     # 生成完毕
     if not incall:
-        print("\033[1;32mSuccessfully generated, with %0.2f seconds.\nPlease save your private key and don't lose it!\n\033[0m" % float(time.time() - startTime))
+
+        print("\033[1;32mSuccessfully generated, with %0.2f seconds.\nPlease save the key pair and don't reveal the private key!\n\033[0m" % float(time.time() - startTime))
         print("\033[1;31mRSA PublicKey for PKCS#8:\033[0m\n%s" % public_key)
         print("\n\033[1;31mRSA PrivateKey for PKCS#1:\033[0m\n%s" % private_key)
     else:
