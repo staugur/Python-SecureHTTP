@@ -1,12 +1,6 @@
 language: python
-os:
-  - linux
 env:
   - CODECOV_TOKEN="78122297-784f-499a-9ca4-40730d367d06"
-addons:
-  apt:
-    packages:
-      - python-dev
 python:
   - "2.7"
   - "3.4"
@@ -15,6 +9,8 @@ python:
   - "pypy"
   - "pypy3.5"
 sudo: enabled
+before_install:
+  - sudo apt-get install -y python-dev
 install:
   - pip install -U setuptools twine wheel flask codecov rsa>=4.0 pycrypto>=2.6.1
   - make dev
