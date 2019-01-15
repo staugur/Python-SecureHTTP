@@ -6,11 +6,12 @@ python:
   - "3.4"
   - "3.5"
   - "3.6"
+  - "pypy"
 sudo: enabled
 before_install:
   - sudo apt-get install -y python-dev
 install:
-  - pip install -U setuptools twine wheel flask codecov rsa>=4.0 pycrypto>=2.6.1
+  - pip install setuptools twine wheel flask codecov rsa>=4.0 pycrypto>=2.6.1
   - make dev
 script:
   - coverage run setup.py test
