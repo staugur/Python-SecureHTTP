@@ -139,6 +139,8 @@ def AESEncrypt(key, plaintext):
 
     :param plaintext: str: 将加密的明文消息
 
+    :raises: AESError
+
     :returns: str,unicode: 加密后的十六进制
     """
     if key and isinstance(key, string_types) and mod(len(key), 16) == 0 and plaintext and isinstance(plaintext, string_types):
@@ -156,6 +158,8 @@ def AESDecrypt(key, ciphertext):
     :param key: str: 16位的密钥串
 
     :param ciphertext: str,unicode: 已加密的十六进制数据密文
+
+    :raises: AESError
 
     :returns: str,bool(False): 返回False时说明解密失败，成功则返回数据
     """
