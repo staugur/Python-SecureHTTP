@@ -23,7 +23,7 @@
 
         对请求参数或数据添加公共参数后排序再使用MD5签名
 
-    :copyright: (c) 2018 by staugur.
+    :copyright: (c) 2019 by staugur.
     :license: MIT, see LICENSE for more details.
 """
 
@@ -34,23 +34,23 @@ import json
 import time
 import copy
 import base64
-import urllib
 import hashlib
 from operator import mod
 from Crypto import Random
 from Crypto.Cipher import AES
 from Crypto.PublicKey import RSA
 
-__version__ = "0.2.1"
+__version__ = "0.2.2"
 __author__ = "staugur <staugur@saintic.com>"
 __all__ = ["RSAEncrypt", "RSADecrypt", "AESEncrypt", "AESDecrypt", "EncryptedCommunicationClient", "EncryptedCommunicationServer", "generate_rsa_keys"]
 
-
 PY2 = sys.version_info[0] == 2
 if PY2:
+    from urllib import quote
     string_types = (str, unicode)
     public_key_prefix = u"-----BEGIN RSA PUBLIC KEY-----"
 else:
+    from urllib.request import quote
     string_types = (str,)
     public_key_prefix = b"-----BEGIN RSA PUBLIC KEY-----"
 
@@ -61,6 +61,10 @@ class SecureHTTPException(Exception):
 
 class SignError(SecureHTTPException):
     """签名错误：加签异常、验签不匹配等"""
+    pass
+
+
+class AESError(SecureHTTPException):
     pass
 
 
@@ -90,10 +94,9 @@ def generate_rsa_keys(length=1024, incall=False):
     private_key = key.exportKey("PEM", pkcs=1)
     # 生成完毕
     if not incall:
-
         print("\033[1;32mSuccessfully generated, with %0.2f seconds.\nPlease save the key pair and don't reveal the private key!\n\033[0m" % float(time.time() - startTime))
-        print("\033[1;31mRSA PublicKey for PKCS#8:\033[0m\n%s" % public_key)
-        print("\n\033[1;31mRSA PrivateKey for PKCS#1:\033[0m\n%s" % private_key)
+        print("\033[1;31mRSA PublicKey for PKCS#8:\033[0m\n%s" % public_key.decode('utf-8'))
+        print("\n\033[1;31mRSA PrivateKey for PKCS#1:\033[0m\n%s" % private_key.decode('utf-8'))
     else:
         return (public_key, private_key)
 
@@ -101,25 +104,25 @@ def generate_rsa_keys(length=1024, incall=False):
 def RSAEncrypt(pubkey, plaintext):
     """RSA公钥加密
 
-    :param pubkey: str: pkcs1或pkcs8格式公钥
+    :param pubkey: str,bytes: pkcs1或pkcs8格式公钥
 
     :param plaintext: str: 准备加密的文本消息
 
-    :returns: base64编码的字符串
+    :returns: str,unicode: base64编码的字符串
     """
     if pubkey and pubkey.startswith(public_key_prefix):
         pubkey = rsa.PublicKey.load_pkcs1(pubkey)
     else:
         # load_pkcs1_openssl_pem可以加载openssl生成的pkcs1公钥(实为pkcs8格式)
         pubkey = rsa.PublicKey.load_pkcs1_openssl_pem(pubkey)
-    ciphertext = rsa.encrypt(plaintext, pubkey)
-    return base64.b64encode(ciphertext)
+    ciphertext = rsa.encrypt(plaintext.encode('utf-8'), pubkey)
+    return base64.b64encode(ciphertext).decode('utf-8')
 
 
 def RSADecrypt(privkey, ciphertext):
     """RSA私钥解密
 
-    :param privkey: str: pkcs1格式私钥
+    :param privkey: str,bytes: pkcs1格式私钥
 
     :param ciphertext: str: 已加密的消息
 
@@ -127,7 +130,7 @@ def RSADecrypt(privkey, ciphertext):
     """
     privkey = rsa.PrivateKey.load_pkcs1(privkey)
     plaintext = rsa.decrypt(base64.b64decode(ciphertext), privkey)
-    return plaintext
+    return plaintext.decode('utf-8')
 
 
 def AESEncrypt(key, plaintext):
@@ -144,6 +147,8 @@ def AESEncrypt(key, plaintext):
         ciphertext = generator.encrypt(PADDING(plaintext))
         crypted_str = base64.b64encode(ciphertext)
         return crypted_str.decode()
+    else:
+        raise AESError("Parameter error: key or ciphertext type is not valid, or key length is not valid")
 
 
 def AESDecrypt(key, ciphertext):
@@ -164,7 +169,10 @@ def AESDecrypt(key, ciphertext):
             result = re.compile('[\\x00-\\x08\\x0b-\\x0c\\x0e-\\x1f\n\r\t]').sub('', msg.decode())
         except Exception:
             return False
-        return result
+        else:
+            return result
+    else:
+        raise AESError("Parameter error: key or ciphertext type is not valid, or key length is not valid")
 
 
 class EncryptedCommunicationMix(object):
@@ -212,10 +220,15 @@ class EncryptedCommunicationMix(object):
 
         :returns: str: Signed message
         """
+        if not PY2 and isinstance(message, str):
+            message = message.encode("utf-8")
         return hashlib.md5(message).hexdigest()
 
     def genAesKey(self):
-        """生成AES密钥：32位"""
+        """生成AES密钥，长度32
+
+        :returns: str
+        """
         return self.md5(Random.new().read(AES.block_size))
 
     def conversionComma(self, comma_str):
@@ -255,7 +268,7 @@ class EncryptedCommunicationMix(object):
             else:
                 data = copy.deepcopy(parameters)
             # 追加公共参数
-            for k, v in meta.iteritems():
+            for k, v in meta.items():
                 data[k] = v
             # NO.1 参数排序
             _my_sorted = sorted(data.items(), key=lambda data: data[0])
@@ -273,10 +286,9 @@ class EncryptedCommunicationMix(object):
             encodeStr = json.dumps(encodeStr, sort_keys=True)
         except:
             raise
-        if sys.stdin.encoding is None:
-            res = urllib.quote(encodeStr.decode('utf-8').encode('utf-8'), '')
-        else:
-            res = urllib.quote(encodeStr.decode(sys.stdin.encoding).encode('utf8'), '')
+        if isinstance(encodeStr, bytes):
+            encodeStr = encodeStr.decode(sys.stdin.encoding or 'utf-8')
+        res = quote(encodeStr.encode('utf-8'), '')
         res = res.replace('+', '%20')
         res = res.replace('*', '%2A')
         res = res.replace('%7E', '~')
@@ -404,3 +416,4 @@ class EncryptedCommunicationServer(EncryptedCommunicationMix):
                 raise TypeError("Invalid resp data")
         else:
             raise ValueError("Invalid AESKey")
+

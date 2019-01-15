@@ -20,26 +20,26 @@ class UtilsTest(unittest.TestCase):
         text = "helloWorld"
         self.assertEqual(RSADecrypt(pri, RSAEncrypt(pub, text)), text)
 
+    def test_RSA(self):
+        plaintext = "Message"
+        ciphertext = RSAEncrypt(pubkey, plaintext)
+        to_decrypt = RSADecrypt(privkey, ciphertext)
+        self.assertEqual(plaintext, to_decrypt)
+
     def test_AES(self):
         key = "secretsecretsecr"
         to_encrypt = 'Message'
         to_decrypt = 'AJ1W95LMUWjuXzHP2lqFlA=='
         to_decrypt_16 = '009d56f792cc5168ee5f31cfda5a8594'
         # 测试base64与十六进制互相转换
-        self.assertEqual(to_decrypt, base64.b64encode(a2b_hex(to_decrypt_16)))
-        self.assertEqual(b2a_hex(base64.b64decode(to_decrypt)), to_decrypt_16)
+        self.assertEqual(to_decrypt, base64.b64encode(a2b_hex(to_decrypt_16)).decode("utf-8"))
+        self.assertEqual(b2a_hex(base64.b64decode(to_decrypt)).decode("utf-8"), to_decrypt_16)
         # 测试加密
         self.assertEqual(to_decrypt, AESEncrypt(key, to_encrypt))
-        self.assertEqual(b2a_hex(base64.b64decode(to_decrypt)), to_decrypt_16)
+        self.assertEqual(b2a_hex(base64.b64decode(to_decrypt)).decode("utf-8"), to_decrypt_16)
         # 测试解密
         self.assertEqual(to_encrypt, AESDecrypt(key, to_decrypt))
-        self.assertEqual(to_encrypt, AESDecrypt(key, base64.b64encode(a2b_hex(to_decrypt_16))))
-
-    def test_RSA(self):
-        plaintext = "Message"
-        ciphertext = RSAEncrypt(pubkey, plaintext)
-        to_decrypt = RSADecrypt(privkey, ciphertext)
-        self.assertEqual(plaintext, to_decrypt)
+        self.assertEqual(to_encrypt, AESDecrypt(key, base64.b64encode(a2b_hex(to_decrypt_16)).decode("utf-8")))
 
     def test_ec(self):
 

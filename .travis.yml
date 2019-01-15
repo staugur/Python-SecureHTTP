@@ -3,6 +3,12 @@ env:
   - CODECOV_TOKEN="78122297-784f-499a-9ca4-40730d367d06"
 python:
   - "2.7"
+  - "3.4"
+  - "3.5"
+  - "3.6"
+  - "3.7"
+  - "pypy"
+  - "pypy3"
 sudo: enabled
 install:
   - pip install -U setuptools twine wheel flask codecov rsa>=4.0 pycrypto>=2.6.1
