@@ -1,12 +1,12 @@
 language: python
 os:
   - linux
-  - osx
-matrix:
-  allow_failures:
-    - os: osx
 env:
   - CODECOV_TOKEN="78122297-784f-499a-9ca4-40730d367d06"
+addons:
+  apt:
+    packages:
+      - python-dev
 python:
   - "2.7"
   - "3.4"
