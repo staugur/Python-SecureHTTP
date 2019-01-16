@@ -9,8 +9,6 @@ python:
   - "pypy"
   - "pypy3"
 sudo: enabled
-before_install:
-  - sudo apt-get install -y python-dev build-essential
 install:
   - pip install setuptools twine wheel flask codecov rsa>=4.0 pycryptodome>=3.7.2
   - make dev

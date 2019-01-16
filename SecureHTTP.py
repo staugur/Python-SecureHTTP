@@ -282,7 +282,7 @@ class EncryptedCommunicationMix(object):
             # NO.2 排序后拼接字符串
             canonicalizedQueryString = ''
             for (k, v) in _my_sorted:
-                canonicalizedQueryString += '{}={}&'.format(self._percent_encode(k), self._percent_encode(v))
+                canonicalizedQueryString += '%s=%s&' %(self._percent_encode(k), self._percent_encode(v))
             # NO.3 加密返回签名: Signature
             return self.md5(canonicalizedQueryString)
         else:

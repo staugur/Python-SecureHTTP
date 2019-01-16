@@ -122,6 +122,7 @@ setup(
         'rsa>=4.0',
         'pycryptodome>=3.7.2'
     ],
+    tests_require=["flask>0.9"],
     cmdclass={
         'publish': PublishCommand,
     },

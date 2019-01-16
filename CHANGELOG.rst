@@ -1,3 +1,12 @@
+V0.2.3
+------
+
+Released in 2019-01-16
+
+-  修复部分编码问题
+-  加密库从pycrypto改为pycryptodome
+-  支持pypy
+
 V0.2.2
 ------
 
