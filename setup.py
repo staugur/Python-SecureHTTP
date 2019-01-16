@@ -13,7 +13,7 @@ Python-SecureHTTP
 
 .. code:: bash
 
-    $ pip install Python-SecureHTTP
+    $ pip install -U SecureHTTP
 
 **示例代码(Examples)**
 
