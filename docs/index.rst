@@ -84,10 +84,91 @@ Python-SecureHTTP
 
         签名规则可以参考阿里云API签名
 
+
+安装
+-----
+
+*使用pip安装*：
+
+.. code:: bash
+
+    # 正式版(Release)
+    $ pip install -U SecureHTTP
+    # 开发版(Dev)
+    $ pip install -U git+https://github.com/staugur/Python-SecureHTTP.git
+
+*关于依赖库*：
+
+    SecureHTTP依赖rsa、pycryptodomex。
+
+    PyCryptodome是PyCrypto的一个分支，它为PyCrypto的最后一个正式版本（2.6.1）带来了一些增强功能，如支持pypy。
+    PyCryptodomex即PyCryptodome，区别在于导入包名不同，前者导入包名是Cryptodome，后者是Crypto(同pycrypto)。
+
+    SecureHTTP首先尝试导入PyCryptodomex提供的包，导入失败后，再导入PyCrypto或PyCryptodome提供的包，所以您的系统中可以同时安装PyCrypto、PyCryptodomex，但不能同时安装PyCrypto、PyCryptodome，因为包名冲突。
+    您也可以卸载PyCryptodomex，这样SecureHTTP会尝试导入PyCrypto。
+
+    如果您的Python版本是3.+或使用PyPy解释器，建议使用PyCryptodome/PyCryptodomex。
+
+
+测试用例
+---------
+
+.. code:: bash
+
+    $ git clone https://github.com/staugur/Python-SecureHTTP && cd Python-SecureHTTP
+    $ make test
+
+
 简单示例
 ---------
 
-`点击这里查看简单示例 <https://github.com/staugur/Python-SecureHTTP/blob/master/examples/Demo/>`_
+1. RSA加密、解密
+
+   .. code:: python
+
+       from SecureHTTP import AESEncrypt, AESDecrypt
+       # 加密后的密文
+       ciphertext = AESEncrypt('ThisIsASecretKey', 'Hello World!')
+       # 解密后的明文
+       plaintext = AESDecrypt("ThisIsASecretKey", ciphertext)
+
+2. AES加密、解密
+
+   .. code:: python
+
+       from SecureHTTP import RSAEncrypt, RSADecrypt, generate_rsa_keys
+       # 生成密钥对
+       (pubkey, privkey) = generate_rsa_keys(incall=True)
+       # 加密后的密文
+       ciphertext = RSAEncrypt(pubkey, 'Hello World!')
+       # 解密后的明文
+       plaintext = RSADecrypt(privkey, ciphertext)
+
+3. C/S加解密示例： `点此查看以下模拟代码的真实WEB环境示例 <https://github.com/staugur/Python-SecureHTTP/blob/master/examples/Demo/>`__
+
+   .. code:: python
+
+       # 模拟C/S请求
+       from SecureHTTP import EncryptedCommunicationClient, EncryptedCommunicationServer, generate_rsa_keys
+       post = {u'a': 1, u'c': 3, u'b': 2, u'data': ["a", 1, None]}
+       resp = {u'msg': None, u'code': 0}
+       # 生成密钥对
+       (pubkey, privkey) = generate_rsa_keys(incall=True)
+       # 初始化客户端类
+       client = EncryptedCommunicationClient(pubkey)
+       # 初始化服务端类
+       server = EncryptedCommunicationServer(privkey)
+       # NO.1 客户端加密数据
+       c1 = client.clientEncrypt(post)
+       # NO.2 服务端解密数据
+       s1 = server.serverDecrypt(c1)
+       # NO.3 服务端返回加密数据
+       s2 = server.serverEncrypt(resp)
+       # NO.4 客户端获取返回数据并解密
+       c2 = client.clientDecrypt(s2)
+       # 以上四个步骤即完成一次请求/响应
+
+4. B/S加解密示例： `登录时，password使用RSA加密，后端解密 <https://github.com/staugur/Python-SecureHTTP/tree/master/examples/BS-RSA>`__
 
 
 -----------------

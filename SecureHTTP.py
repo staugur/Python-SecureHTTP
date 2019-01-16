@@ -36,9 +36,14 @@ import copy
 import base64
 import hashlib
 from operator import mod
-from Crypto import Random
-from Crypto.Cipher import AES
-from Crypto.PublicKey import RSA
+try:
+    from Cryptodome import Random
+    from Cryptodome.Cipher import AES
+    from Cryptodome.PublicKey import RSA
+except ImportError:
+    from Crypto import Random
+    from Crypto.Cipher import AES
+    from Crypto.PublicKey import RSA
 
 __version__ = "0.2.3"
 __author__ = "staugur <staugur@saintic.com>"
@@ -423,37 +428,3 @@ class EncryptedCommunicationServer(EncryptedCommunicationMix):
                 raise TypeError("Invalid resp data")
         else:
             raise ValueError("Invalid AESKey")
-
-
-if __name__ == '__main__':
-    ct = AESEncrypt('secretsecretsecr', 'hello')
-    print(ct, type(ct))
-    pt = AESDecrypt("secretsecretsecr", ct)
-    print(pt, type(pt))
-    print('############')
-    pubkey, privkey = generate_rsa_keys(incall=True)
-    ct = RSAEncrypt(pubkey, 'hello')
-    print(ct, type(ct))
-    py = RSADecrypt(privkey, ct)
-    print(pt, type(pt))
-    print('############')
-
-    post = {u'a': 1, u'c': 3, u'b': 2, u'data': ["a", 1, None]}
-    resp = {u'msg': None, u'code': 0}
-
-    client = EncryptedCommunicationClient(pubkey)
-    server = EncryptedCommunicationServer(privkey)
-
-    print(client.AESKey, type(client.AESKey))
-
-    c1 = client.clientEncrypt(post)
-    print("\nNO.1 客户端加密数据：%s, %s" % (c1, type(c1)))
-
-    s1 = server.serverDecrypt(c1)
-    print("\nNO.2 服务端解密数据：%s, %s" % (s1, type(s1)))
-
-    s2 = server.serverEncrypt(resp, False)
-    print("\nNO.3 服务端返回加密数据：%s, %s" % (s2, type(s2)))
-
-    c2 = client.clientDecrypt(s2)
-    print("\nNO.4 客户端获取返回数据并解密：%s, %s" % (c2, type(c2)))

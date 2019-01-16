@@ -4,7 +4,7 @@ V0.2.3
 Released in 2019-01-16
 
 -  修复部分编码问题
--  加密库从pycrypto改为pycryptodome
+-  加密库从pycrypto改为pycryptodomex
 -  支持pypy
 
 V0.2.2

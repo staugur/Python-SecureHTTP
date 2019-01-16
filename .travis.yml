@@ -10,7 +10,7 @@ python:
   - "pypy3"
 sudo: enabled
 install:
-  - pip install setuptools twine wheel flask codecov rsa>=4.0 pycryptodome>=3.7.2
+  - pip install setuptools twine wheel flask codecov
   - make dev
 script:
   - coverage run setup.py test

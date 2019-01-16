@@ -2,5 +2,3 @@ flask>=0.9
 sphinx
 sphinx_rtd_theme
 codecov
-rsa>=4.0
-pycryptodome>=3.7.2

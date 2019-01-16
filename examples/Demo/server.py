@@ -26,7 +26,7 @@ def index():
     try:
         data = sc.serverDecrypt(post)
         app.logger.debug("客户端请求数据：%s" %data)
-    except Exception,e:
+    except Exception:
     	raise
     else:
         resp = sc.serverEncrypt(data)
