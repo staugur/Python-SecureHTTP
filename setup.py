@@ -120,7 +120,7 @@ setup(
     platforms='any',
     install_requires=[
         'rsa>=4.0',
-        'pycrypto>=2.6.1'
+        'pycryptodome>=3.7.2'
     ],
     cmdclass={
         'publish': PublishCommand,
@@ -132,7 +132,9 @@ setup(
         'License :: OSI Approved :: MIT License',
         'Operating System :: OS Independent',
         'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: Implementation :: CPython',
         'Programming Language :: Python :: Implementation :: PyPy',
         'Topic :: Internet :: WWW/HTTP :: Dynamic Content',
