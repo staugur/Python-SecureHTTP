@@ -2,7 +2,8 @@ language: python
 env:
   - CODECOV_TOKEN="78122297-784f-499a-9ca4-40730d367d06"
 python:
-  - "pypy"
+  - "pypy2.7-6.0"
+  - "pypy3.5-6.0"
 sudo: enabled
 before_install:
   - sudo apt-get install -y python-dev build-essential
