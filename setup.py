@@ -70,7 +70,7 @@ Python-SecureHTTP
 文档(Documentation)
 ~~~~~~~~~~~~~~~~~~~
 
-`中文 <https://python-securehttp.readthedocs.io/zh_CN/latest/>`__
+`中文(Chinese) <https://python-securehttp.readthedocs.io/zh_CN/latest/>`__
 """
 
 import os

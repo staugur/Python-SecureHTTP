@@ -45,7 +45,7 @@ except ImportError:
     from Crypto.Cipher import AES
     from Crypto.PublicKey import RSA
 
-__version__ = "0.2.3"
+__version__ = "0.2.4"
 __author__ = "staugur <staugur@saintic.com>"
 __all__ = ["RSAEncrypt", "RSADecrypt", "AESEncrypt", "AESDecrypt", "EncryptedCommunicationClient", "EncryptedCommunicationServer", "generate_rsa_keys"]
 
@@ -70,6 +70,7 @@ class SignError(SecureHTTPException):
 
 
 class AESError(SecureHTTPException):
+    """AES加密、解密时参数错误"""
     pass
 
 
