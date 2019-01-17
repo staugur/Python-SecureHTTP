@@ -1,3 +1,4 @@
+dist: trusty
 language: python
 env:
   - CODECOV_TOKEN="78122297-784f-499a-9ca4-40730d367d06"
@@ -8,11 +9,15 @@ python:
   - "3.6"
   - "pypy"
   - "pypy3"
+matrix:
+  include:
+    - php: 5.2
+      dist: precise
+    - php: 5.3
+      dist: precise
 sudo: enabled
 before_install:
-  - sudo apt-get install software-properties-common python-software-properties
-  - sudo add-apt-repository ppa:ondrej/php && sudo apt-get update
-  - sudo apt-get install -y golang php7.2
+  - sudo apt-get install -y golang
 install:
   - pip install setuptools twine wheel flask codecov
   - make dev
