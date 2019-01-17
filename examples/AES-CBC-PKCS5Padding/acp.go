@@ -27,7 +27,7 @@ func main(){
 
     //解密串
     newPlain,_ := Decrypt(cipherText)
-    fmt.Println("new plain:", newPlain)
+    fmt.Println("newPlain:", newPlain)
 }
 
 func Encrypt(origData []byte) (string, error) {

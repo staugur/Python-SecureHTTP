@@ -9,6 +9,8 @@ python:
   - "pypy"
   - "pypy3"
 sudo: enabled
+before_install:
+  - apt-get install -y golang php
 install:
   - pip install setuptools twine wheel flask codecov
   - make dev

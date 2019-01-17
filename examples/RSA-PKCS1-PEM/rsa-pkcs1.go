@@ -31,13 +31,13 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
-		fmt.Println("rsa encrypt base64:" + base64.StdEncoding.EncodeToString(data))
+		fmt.Println("rsa encrypt base64: " + base64.StdEncoding.EncodeToString(data))
 	}
 	origData, err := RsaDecrypt(data)
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(string(origData))
+	fmt.Println("rsa decrypted: " + string(origData))
 }
 
 // 适用pkcs1私钥
