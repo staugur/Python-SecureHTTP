@@ -116,6 +116,9 @@ def RSAEncrypt(pubkey, plaintext):
 
     :returns: str,unicode: base64编码的字符串
     """
+    if not PY2:
+        if isinstance(pubkey, str):
+            pubkey = pubkey.encode("utf-8")
     if pubkey and pubkey.startswith(public_key_prefix):
         pubkey = rsa.PublicKey.load_pkcs1(pubkey)
     else:
