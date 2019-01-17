@@ -10,6 +10,8 @@ python:
   - "pypy3"
 sudo: enabled
 before_install:
+  - sudo apt-get install software-properties-common python-software-properties
+  - sudo add-apt-repository ppa:ondrej/php && sudo apt-get update
   - sudo apt-get install -y golang php7.2
 install:
   - pip install setuptools twine wheel flask codecov
