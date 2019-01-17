@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 os.system("pip uninstall -y pycryptodomex")
-if os.getenv("CODECOV_TOKEN"):
+if os.getenv("TRAVIS"):
     os.system("pip install pycryptodome")
 else:
     os.system("pip install pycrypto")
