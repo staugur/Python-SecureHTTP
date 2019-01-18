@@ -240,6 +240,28 @@ class EncryptedCommunicationMix(object):
             message = message.encode("utf-8")
         return hashlib.md5(message).hexdigest()
 
+    def sha1(self, message):
+        """SHA1签名
+
+        :params message: str,unicode,bytes:
+
+        :returns: str: Signed message
+        """
+        if not PY2 and isinstance(message, str):
+            message = message.encode("utf-8")
+        return hashlib.sha1(message).hexdigest()
+
+    def sha256(self, message):
+        """SHA256签名
+
+        :params message: str,unicode,bytes:
+
+        :returns: str: Signed message
+        """
+        if not PY2 and isinstance(message, str):
+            message = message.encode("utf-8")
+        return hashlib.sha256(message).hexdigest()
+
     def genAesKey(self):
         """生成AES密钥，长度32
 
@@ -343,7 +365,7 @@ class EncryptedCommunicationClient(EncryptedCommunicationMix):
         metaData.update(Signature=self.sign(postData, metaData))
         # 对请求数据填充元信息
         postData.update(__meta__=metaData)
-        #  使用AES加密请求数据
+        # 使用AES加密请求数据
         JsonAESEncryptedData = AESEncrypt(self.AESKey, json.dumps(postData, separators=(',', ':')))
         return dict(key=RSAKey, value=JsonAESEncryptedData)
 
