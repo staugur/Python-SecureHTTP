@@ -13,7 +13,7 @@ before_install:
   - sudo apt-get update
   - sudo apt-get install -y php5-cli golang
 install:
-  - pip install setuptools twine wheel flask codecov
+  - pip install setuptools twine wheel flask codecov rsa
   - make dev
 script:
   - coverage run setup.py test

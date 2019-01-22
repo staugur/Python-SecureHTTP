@@ -1,3 +1,14 @@
+V0.3.0
+------
+
+Released in 2019-01-22
+
+-  生成、导入RSA私钥时可以设置密码
+-  命令行参数化，可设置长度、密码并写入PEM文件
+-  自定义签名算法：md5、sha1、sha256
+-  RSA加密、解密弃用rsa包，改用pycryptdome的PKCS1_v1_5
+-  注意：Pycrypto、Pycryptodome将弃用！
+
 V0.2.4
 ------
 

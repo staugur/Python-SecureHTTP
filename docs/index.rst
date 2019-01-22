@@ -27,7 +27,7 @@ Python-SecureHTTP
 
 *关于依赖库*：
 
-    SecureHTTP依赖rsa、pycryptodomex。
+    SecureHTTP依赖pycryptodomex。
 
     PyCryptodome是PyCrypto的一个分支，它为PyCrypto的最后一个正式版本（2.6.1）带来了一些增强功能，如支持pypy。
     PyCryptodomex即PyCryptodome，区别在于导入包名不同，前者导入包名是Cryptodome，后者是Crypto(同pycrypto)。
@@ -36,6 +36,8 @@ Python-SecureHTTP
     您也可以卸载PyCryptodomex，这样SecureHTTP会尝试导入PyCrypto。
 
     如果您的Python版本是3.+或使用PyPy解释器，建议使用PyCryptodome/PyCryptodomex。
+
+    **注意：PyCrypto/PyCryptodome将会在以后版本中弃用！**
 
 
 测试用例
@@ -161,7 +163,7 @@ Python-SecureHTTP
             2.2 对于其他字符编码成“%XY”的格式，其中XY是字符对应ASCII码的16进制表示。比如英文的双引号（”）对应的编码就是%22.
             2.3 英文空格（ ）编码为%20，而不是加号（+）。
 
-        3. 对以上规范化的字符串使用md5得到签名
+        3. 对以上规范化的字符串使用摘要算法得到签名
 
     @验签步骤：
 
@@ -176,7 +178,7 @@ API Documentation
 -----------------
 
 .. automodule:: SecureHTTP
-    :members: RSAEncrypt, RSADecrypt, AESEncrypt, AESDecrypt, EncryptedCommunicationClient, EncryptedCommunicationServer, generate_rsa_keys, SignError, AESError
+    :members: RSAEncrypt, RSADecrypt, AESEncrypt, AESDecrypt, EncryptedCommunicationClient, EncryptedCommunicationServer, generate_rsa_keys, SignError, AESError, RSAError
     :undoc-members:
     :show-inheritance:
     :noindex:
@@ -190,9 +192,20 @@ CLI Documentation
 1. generate_rsa_keys.py
 -----------------------
 
-这是Python自身生成的RSA密钥对，此命令可以传递一个位置：密钥长度（默认1024），直接在控制台输出密钥内容，比如::
+这是Python自身生成的RSA密钥对，它支持输出到控制台或写入文件、设置私钥密码等，请查看命令帮助::
 
-    generate_rsa_keys.py 2048
+    # generate_rsa_keys.py -h
+    usage: generate_rsa_keys.py [-h] [-v] [-l {1024,2048,3072,4096}]
+                            [-p PASSPHRASE] [-w]
+
+    optional arguments:
+      -h, --help            show this help message and exit
+      -v, --version         Print the SecureHTTP Version
+      -l {1024,2048,3072,4096}, --length {1024,2048,3072,4096}
+                            Key length, default is 2048.
+      -p PASSPHRASE, --passphrase PASSPHRASE
+                            The pass phrase used for protecting the private key.
+      -w, --write           Write a key pair file in PEM format
 
 2. generate_rsa_keys.sh
 -----------------------

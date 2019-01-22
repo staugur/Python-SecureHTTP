@@ -167,10 +167,9 @@ setup(
     },
     platforms='any',
     install_requires=[
-        'rsa>=4.0',
         'pycryptodomex>=3.7.2'
     ],
-    tests_require=["flask>0.9"],
+    tests_require=["flask>0.9", "rsa>=4.0"],
     cmdclass={
         'publish': PublishCommand,
     },

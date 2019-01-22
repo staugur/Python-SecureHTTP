@@ -21,7 +21,7 @@
 
     3. 签名::
 
-        对请求参数或数据添加公共参数后排序再使用MD5签名
+        对请求参数或数据添加公共参数后排序再使用摘要算法签名
 
     :copyright: (c) 2019 by staugur.
     :license: MIT, see LICENSE for more details.
@@ -29,7 +29,6 @@
 
 import re
 import sys
-import rsa
 import json
 import time
 import copy
@@ -38,14 +37,14 @@ import hashlib
 from operator import mod
 try:
     from Cryptodome import Random
-    from Cryptodome.Cipher import AES
     from Cryptodome.PublicKey import RSA
+    from Cryptodome.Cipher import AES, PKCS1_v1_5
 except ImportError:
     from Crypto import Random
-    from Crypto.Cipher import AES
     from Crypto.PublicKey import RSA
+    from Crypto.Cipher import AES, PKCS1_v1_5
 
-__version__ = "0.2.4"
+__version__ = "0.3.0"
 __author__ = "staugur <staugur@saintic.com>"
 __all__ = ["RSAEncrypt", "RSADecrypt", "AESEncrypt", "AESDecrypt", "EncryptedCommunicationClient", "EncryptedCommunicationServer", "generate_rsa_keys"]
 
@@ -65,44 +64,67 @@ class SecureHTTPException(Exception):
 
 
 class SignError(SecureHTTPException):
-    """签名错误：加签异常、验签不匹配等"""
+    """签名异常：加签异常、验签不匹配等"""
     pass
 
 
 class AESError(SecureHTTPException):
-    """AES加密、解密时参数错误"""
+    """AES异常：加密、解密时参数错误"""
     pass
 
 
-def generate_rsa_keys(length=1024, incall=False):
-    """生成RSA所需的公钥和私钥，公钥格式pkcs8，私钥格式pkcs1。
+class RSAError(SecureHTTPException):
+    """RSA异常：密钥错误、加密解密错误"""
+    pass
 
-    :param length: int: 指定密钥长度，默认1024，需要更强加密可设置为2048
+
+def generate_rsa_keys(incall=False, length=2048, passphrase=None):
+    """生成RSA所需的公钥和私钥，公钥格式pkcs8，私钥格式pkcs1。
 
     :param incall: bool: 是否内部调用，默认False表示提供给脚本调用直接打印密钥，True不打印密钥改为return返回
 
+    :param length: int: 指定密钥长度，默认1024，需要更强加密可设置为2048
+
+    :param passphrase: str: 私钥保护的密码短语
+
     :returns: tuple(public_key, private_key)
     """
-    if not incall:
-        args = sys.argv[1:]
-        if args:
-            try:
-                length = int(args[0])
-            except:
-                pass
+    if incall is False:
+        # 命令行调用
+        import argparse
+        parser = argparse.ArgumentParser()
+        parser.add_argument("-v", "--version", help="Print the SecureHTTP Version", default=False, action='store_true')
+        parser.add_argument("-l", "--length", default=2048, type=int, choices=[1024, 2048, 3072, 4096], help="Key length, default is 2048.")
+        parser.add_argument("-p", "--passphrase", default=None, type=str, help="The pass phrase used for protecting the private key.")
+        parser.add_argument("-w", "--write", help="Write a key pair file in PEM format", default=False, action='store_true')
+        args = parser.parse_args()
+        version = args.version
+        length = args.length
+        passphrase = args.passphrase
+        write = args.write
+        if version:
+            print("v"+__version__)
+            exit(0)
         print("\033[1;33mGenerating RSA private key, %s bit long modulus.\n\033[0m" % length)
         startTime = time.time()
     # 开始生成
-    random_generator = Random.new().read
-    key = RSA.generate(length, random_generator)
-    pub_key = key.publickey()
-    public_key = pub_key.exportKey("PEM", pkcs=8)
-    private_key = key.exportKey("PEM", pkcs=1)
+    key = RSA.generate(length)
+    public_key = key.publickey().exportKey(format="PEM", pkcs=8)
+    private_key = key.exportKey(format="PEM", passphrase=passphrase, pkcs=1)
     # 生成完毕
-    if not incall:
+    if incall is False:
         print("\033[1;32mSuccessfully generated, with %0.2f seconds.\nPlease save the key pair and don't reveal the private key!\n\033[0m" % float(time.time() - startTime))
-        print("\033[1;31mRSA PublicKey for PKCS#8:\033[0m\n%s" % public_key.decode('utf-8'))
-        print("\n\033[1;31mRSA PrivateKey for PKCS#1:\033[0m\n%s" % private_key.decode('utf-8'))
+        if write is True:
+            public_key_file = "SecureHTTP_pkcs8_public.pem"
+            private_key_file = "SecureHTTP_pkcs1_private.pem"
+            with open(public_key_file, "w") as fp:
+                fp.write(public_key.decode('utf-8'))
+            with open(private_key_file, "w") as fp:
+                fp.write(private_key.decode('utf-8'))
+            print("\033[1;31mRSA PublicKey File: %s, and PrivateKey File: %s\033[0m" % (public_key_file, private_key_file))
+        else:
+            print("\033[1;31mRSA PublicKey for PKCS#8:\033[0m\n%s" % public_key.decode('utf-8'))
+            print("\n\033[1;31mRSA PrivateKey for PKCS#1:\033[0m\n%s" % private_key.decode('utf-8'))
     else:
         return (public_key, private_key)
 
@@ -112,33 +134,30 @@ def RSAEncrypt(pubkey, plaintext):
 
     :param pubkey: str,bytes: pkcs1或pkcs8格式公钥
 
-    :param plaintext: str: 准备加密的文本消息
+    :param plaintext: str,bytes: 准备加密的文本消息
 
-    :returns: str,unicode: base64编码的字符串
+    :returns: str,unicode: base64编码的字符串(utf8解码)
     """
-    if not PY2:
-        if isinstance(pubkey, str):
-            pubkey = pubkey.encode("utf-8")
-    if pubkey and pubkey.startswith(public_key_prefix):
-        pubkey = rsa.PublicKey.load_pkcs1(pubkey)
-    else:
-        # load_pkcs1_openssl_pem可以加载openssl生成的pkcs1公钥(实为pkcs8格式)
-        pubkey = rsa.PublicKey.load_pkcs1_openssl_pem(pubkey)
-    ciphertext = rsa.encrypt(plaintext.encode('utf-8'), pubkey)
+    if not PY2 and isinstance(plaintext, str):
+        plaintext = plaintext.encode("utf-8")
+    pubkey = RSA.importKey(pubkey)
+    ciphertext = PKCS1_v1_5.new(pubkey).encrypt(plaintext)
     return base64.b64encode(ciphertext).decode('utf-8')
 
 
-def RSADecrypt(privkey, ciphertext):
+def RSADecrypt(privkey, ciphertext, passphrase=None):
     """RSA私钥解密
 
     :param privkey: str,bytes: pkcs1格式私钥
 
-    :param ciphertext: str: 已加密的消息
+    :param ciphertext: str,bytes: 已加密的消息
 
-    :returns: 消息原文
+    :param passphrase: str,bytes: 私钥保护的密码短语
+
+    :returns: str,unicode: 消息原文(utf8解码)
     """
-    privkey = rsa.PrivateKey.load_pkcs1(privkey)
-    plaintext = rsa.decrypt(base64.b64decode(ciphertext), privkey)
+    privkey = RSA.importKey(privkey, passphrase=passphrase)
+    plaintext = PKCS1_v1_5.new(privkey).decrypt(base64.b64decode(ciphertext), Random.new().read)
     return plaintext.decode('utf-8')
 
 
@@ -262,6 +281,16 @@ class EncryptedCommunicationMix(object):
             message = message.encode("utf-8")
         return hashlib.sha256(message).hexdigest()
 
+    def abstract_algorithm_mapping(self, algorithm="md5"):
+        """摘要算法映射表
+
+        :param algorithm: str: 算法名称，默认md5，可选md5、sha1、sha256
+
+        :returns: method of calculating summary
+        """
+        mapping = dict(md5=self.md5, sha1=self.sha1, sha256=self.sha256)
+        return mapping.get(algorithm.lower(), self.md5)
+
     def genAesKey(self):
         """生成AES密钥，长度32
 
@@ -295,6 +324,7 @@ class EncryptedCommunicationMix(object):
         """
         if isinstance(parameters, dict) and isinstance(meta, dict):
             signIndex = meta.get("SignatureIndex", None)
+            SignMethod = meta.get("SignatureMethod", "md5")
             # 重新定义要加签的dict
             if signIndex is False:
                 return
@@ -313,9 +343,9 @@ class EncryptedCommunicationMix(object):
             # NO.2 排序后拼接字符串
             canonicalizedQueryString = ''
             for (k, v) in _my_sorted:
-                canonicalizedQueryString += '%s=%s&' %(self._percent_encode(k), self._percent_encode(v))
+                canonicalizedQueryString += '%s=%s&' % (self._percent_encode(k), self._percent_encode(v))
             # NO.3 加密返回签名: Signature
-            return self.md5(canonicalizedQueryString)
+            return self.abstract_algorithm_mapping(SignMethod)(canonicalizedQueryString)
         else:
             raise TypeError("Invalid sign parameters or meta")
 
@@ -344,12 +374,14 @@ class EncryptedCommunicationClient(EncryptedCommunicationMix):
         self.AESKey = self.genAesKey()
         self.PublicKey = PublicKey
 
-    def clientEncrypt(self, post, signIndex=None):
+    def clientEncrypt(self, post, **signargs):
         """客户端发起加密请求通信 for NO.1
 
         :param post: dict: 请求的数据
 
         :param signIndex: str: 参与排序加签的键名，False表示不签名，None时表示加签post中所有数据，非空时请用逗号分隔键名(字符串)
+
+        :param signMethod: str: 签名算法，可选md5、sha1、sha256
 
         :returns: dict: {key=RSAKey, value=加密数据}
         """
@@ -360,7 +392,7 @@ class EncryptedCommunicationClient(EncryptedCommunicationMix):
         # 使用RSA公钥加密AES密钥获取RSA密文作为密钥
         RSAKey = RSAEncrypt(self.PublicKey, self.AESKey)
         # 定义元数据
-        metaData = dict(Timestamp=self.get_current_timestamp(), SignatureVersion="v1", SignatureMethod="MD5", SignatureIndex=signIndex)
+        metaData = dict(Timestamp=self.get_current_timestamp(), SignatureVersion="v1", SignatureMethod=signargs.get("signMethod", "md5"), SignatureIndex=signargs.get("signIndex", None))
         # 对请求数据签名
         metaData.update(Signature=self.sign(postData, metaData))
         # 对请求数据填充元信息
@@ -431,12 +463,14 @@ class EncryptedCommunicationServer(EncryptedCommunicationMix):
         else:
             raise TypeError("Invalid encrypted post data")
 
-    def serverEncrypt(self, resp, signIndex=None):
+    def serverEncrypt(self, resp, **signargs):
         """服务端返回加密数据 for NO.3
 
         :param resp: dict: 服务端返回的数据，目前仅支持dict
 
         :param signIndex: tuple,list: 参与排序加签的键名，False表示不签名，None时表示加签resp中所有数据，非空时请用逗号分隔键名(字符串)
+
+        :param signMethod: str: 签名算法，可选md5、sha1、sha256
 
         :raises: TypeError,ValueError
 
@@ -445,7 +479,7 @@ class EncryptedCommunicationServer(EncryptedCommunicationMix):
         if self.AESKey:
             if resp and isinstance(resp, dict):
                 respData = copy.deepcopy(resp)
-                metaData = dict(Timestamp=self.get_current_timestamp(), SignatureVersion="v1", SignatureMethod="MD5", SignatureIndex=signIndex)
+                metaData = dict(Timestamp=self.get_current_timestamp(), SignatureVersion="v1", SignatureMethod=signargs.get("signMethod", "md5"), SignatureIndex=signargs.get("signIndex", None))
                 metaData.update(Signature=self.sign(respData, metaData))
                 respData.update(__meta__=metaData)
                 JsonAESEncryptedData = AESEncrypt(self.AESKey, json.dumps(respData, separators=(',', ':')))

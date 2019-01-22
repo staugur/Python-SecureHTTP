@@ -30,8 +30,6 @@ S3CJ/G1Dy8TxcHHbwwIDAQAB
 class MultiLanguagesTest(unittest.TestCase):
 
     def setUp(self):
-        self.HasPHP = True if os.system("php -v") == 0 else False
-        self.HasGo = True if os.system("go version") == 0 else False
         self.examplespath = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "examples")
 
     def test_AES(self):

@@ -20,11 +20,17 @@ class UtilsTest(unittest.TestCase):
         text = "helloWorld"
         self.assertEqual(RSADecrypt(pri, RSAEncrypt(pub, text)), text)
 
+    def test_generate_rsa_keys_with_pass(self):
+        passphrase = b"abcde"
+        (pub, pri) = generate_rsa_keys(incall=True, length=1024, passphrase=passphrase)
+        text = "Hello World!"
+        self.assertEqual(RSADecrypt(pri, RSAEncrypt(pub, text), passphrase=passphrase), text)
+
     def test_RSA(self):
-        plaintext = "Message"
+        plaintext = b"Message"
         ciphertext = RSAEncrypt(pubkey, plaintext)
         to_decrypt = RSADecrypt(privkey, ciphertext)
-        self.assertEqual(plaintext, to_decrypt)
+        self.assertEqual(plaintext, to_decrypt.encode('utf-8'))
 
     def test_AES(self):
         key = "secretsecretsecr"
@@ -55,6 +61,8 @@ class UtilsTest(unittest.TestCase):
         self.assertRaises(TypeError, server.serverDecrypt, 'raise')
         self.assertRaises(ValueError, server.serverEncrypt, 'raise')
         self.assertEqual(len(client.AESKey), 32)
+        # test aam
+        self.assertEqual(client.abstract_algorithm_mapping("sha1")("123"), client.sha1("123"))
 
         # NO.1
         c1 = client.clientEncrypt(post)
@@ -67,7 +75,7 @@ class UtilsTest(unittest.TestCase):
             print("\nNO.2 服务端解密数据：%s" % s1)
         self.assertEqual(s1, post)
         # NO.3
-        s2 = server.serverEncrypt(resp, False)
+        s2 = server.serverEncrypt(resp, signIndex=False)
         if self.debug:
             print("\nNO.3 服务端返回加密数据：%s" % s2)
         # NO.4
@@ -104,7 +112,7 @@ class UtilsTest(unittest.TestCase):
 
         client = EncryptedCommunicationClient(pubkey)
         server = EncryptedCommunicationServer(privkey)
-        s1 = server.serverDecrypt(client.clientEncrypt(post, "configGlossary:installationAt,configGlossary:adminEmail,templateOverridePath,useJSP,cacheTemplatesRefresh,test-content,test_content2,test_content3,test_content4"))
+        s1 = server.serverDecrypt(client.clientEncrypt(post, signMethod="sha1", signIndex="configGlossary:installationAt,configGlossary:adminEmail,templateOverridePath,useJSP,cacheTemplatesRefresh,test-content,test_content2,test_content3,test_content4"))
         c2 = client.clientDecrypt(server.serverEncrypt(resp))
         self.assertEqual(client.AESKey, server.AESKey)
         self.assertEqual(s1, post)
@@ -116,7 +124,7 @@ class UtilsTest(unittest.TestCase):
 
         client = EncryptedCommunicationClient(pubkey)
         server = EncryptedCommunicationServer(privkey)
-        s1 = server.serverDecrypt(client.clientEncrypt(post))
+        s1 = server.serverDecrypt(client.clientEncrypt(post, signMethod="sha256"))
         c2 = client.clientDecrypt(server.serverEncrypt(resp))
         self.assertEqual(client.AESKey, server.AESKey)
         self.assertEqual(s1, post)

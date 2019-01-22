@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
-import os
+import os, sys
 os.system("pip uninstall -y pycryptodomex")
-if os.getenv("TRAVIS"):
+# py3 or pypy install pycryptodome
+if sys.version_info[0] == 3 or 'PyPy' in sys.version:
     os.system("pip install pycryptodome")
 else:
     os.system("pip install pycrypto")
@@ -60,8 +61,9 @@ a6E8QhmUPTtRam4nFbUMj7n797gcrUpT2GSdA94Ags3xB0ucCHi/nWEZyfUxGZjb
         self.assertEqual('test', RSADecrypt(privkey, RSAEncrypt(pubkey, 'test')))
         self.assertEqual('test', RSADecrypt(privkey.encode("utf-8"), RSAEncrypt(pubkey.encode("utf-8"), 'test')))
 
+del UtilsTest
+
+
 if __name__ == '__main__':
     import unittest
     unittest.main()
-
-
