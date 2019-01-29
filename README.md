@@ -69,7 +69,7 @@ c2 = client.clientDecrypt(s2)
 # 以上四个步骤即完成一次请求/响应
 ```
 
-4. B/S加解密示例：[登录时，password使用RSA加密，后端解密](https://github.com/staugur/Python-SecureHTTP/tree/master/examples/BS-RSA)
+4. B/S加解密示例：[登录时，前端使用AES+RSA加密，后端解密](https://github.com/staugur/Python-SecureHTTP/tree/master/examples/BS-RSA)
 
 
 ### 文档(Documentation)
