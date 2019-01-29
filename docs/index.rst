@@ -214,7 +214,9 @@ SecureHTTP.js
 
 CDN: ``https://static.saintic.com/securehttp.js/{ version }/SecureHTTP.js``
 
-依赖：(github) `brix/crypto-js <https://github.com/brix/crypto-js>`_、`travist/jsencrypt <https://github.com/travist/jsencrypt>`_，前者是AES相关、后者是RSA相关::
+依赖：(github) `brix/crypto-js <https://github.com/brix/crypto-js>`_、`travist/jsencrypt <https://github.com/travist/jsencrypt>`_，前者是AES相关、后者是RSA相关。
+
+.. code:: javascript
 
     <!--
     引入AES加密库！
@@ -250,7 +252,43 @@ API:
         函数功能和用法与Python版对应
     > 类: EncryptedCommunicationBrowser -> (browserEncrypt, browserDecrypt)
         亦对应Python版中EncryptedCommunicationClient，browserEncrypt和browserDecrypt方法也分别对应clientEncrypt和clientDecrypt。
-        差异在于：browserEncrypt必须传入有效的signIndex字段，不支持false和全部提交数据的加密。
+        差异在于：browserEncrypt必须传入有效的signIndex字段，暂不支持false和全部提交数据的加签。
+
+Demo:
+
+.. code:: html
+
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>SecureHTTP.js</title>
+    </head>
+    <body>
+        <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+        <!--引入AES加密库-->
+        <script src="https://cdn.bootcss.com/crypto-js/3.1.9-1/crypto-js.js"></script>
+        <!--引入RSA加密库-->
+        <script src="https://cdn.bootcss.com/jsencrypt/3.0.0-rc.1/jsencrypt.min.js"></script>
+        <script src="https://static.saintic.com/securehttp.js/v0.1.0/SecureHTTP.js"></script>
+        <script type="text/javascript">
+            var eb = new EncryptedCommunicationBrowser(pubkey);
+            var post = {a:1, b:2, c:3}
+            $.ajax({
+                url: "SecureHTTP API URL",
+                type: 'post',
+                data: eb.browserEncrypt(post, "a,b,c"),
+                dataType: 'json',
+                success: function(res) {
+                    var resp = eb.browserDecrypt(res);
+                    console.info(resp);
+                },
+                error: function(xhr) {
+                    alert('出错了');
+                }
+            });
+        </script>
+    </body>
+    </html>
 
 -----------------
 API Documentation
