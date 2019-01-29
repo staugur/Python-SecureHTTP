@@ -98,7 +98,7 @@ Python-SecureHTTP
        c2 = client.clientDecrypt(s2)
        # 以上四个步骤即完成一次请求/响应
 
-4. B/S加解密示例： `登录时，password使用RSA加密，后端解密 <https://github.com/staugur/Python-SecureHTTP/tree/master/examples/BS-RSA>`__
+4. B/S加解密示例： `登录时，前端使用AES+RSA加密，后端解密 <https://github.com/staugur/Python-SecureHTTP/tree/master/examples/BS-RSA>`__
 
 
 加密传输通信的流程
@@ -174,16 +174,6 @@ Python-SecureHTTP
         签名规则可以参考阿里云API签名
 
 -----------------
-API Documentation
------------------
-
-.. automodule:: SecureHTTP
-    :members: RSAEncrypt, RSADecrypt, AESEncrypt, AESDecrypt, EncryptedCommunicationClient, EncryptedCommunicationServer, generate_rsa_keys, SignError, AESError, RSAError
-    :undoc-members:
-    :show-inheritance:
-    :noindex:
-
------------------
 CLI Documentation
 -----------------
 
@@ -214,6 +204,63 @@ CLI Documentation
 
     generate_rsa_keys.sh 2048
 
+-------------
+SecureHTTP.js
+-------------
+
+说明：JS版提供了一个 `SecureHTTP.js <https://github.com/staugur/Python-SecureHTTP/blob/master/SecureHTTP.js>`_ 文件封装了相关加密代码：包含AES加密解密、RSA加密解密、浏览器端加密通信封装(RSA+AES+MD5)。
+
+版本：(version) 当前版本 ``v0.1.0``，对应SecureHTTP的版本是 ``v0.2.0 ~ 0.3.0+``。
+
+CDN: ``https://static.saintic.com/securehttp.js/{ version }/SecureHTTP.js``
+
+依赖：(github) `brix/crypto-js <https://github.com/brix/crypto-js>`_、`travist/jsencrypt <https://github.com/travist/jsencrypt>`_，前者是AES相关、后者是RSA相关::
+
+    <!--
+    引入AES加密库！
+    关于crypto-js库，官方地址是：https://code.google.com/archive/p/crypto-js/，可是在墙外，上面给出的是github地址，两处下载的包有差异。
+    -->
+
+    <!--若从googlecode下载则可用以下两种方式引入：-->
+    <!--NO.1 引入组件源码
+    <script src="CryptoJS-v3.1.2/components/core-min.js"></script>
+    <script src="CryptoJS-v3.1.2/components/enc-base64-min.js"></script>
+    <script src="CryptoJS-v3.1.2/components/cipher-core-min.js"></script>
+    <script src="CryptoJS-v3.1.2/components/aes-min.js"></script>
+    <script src="CryptoJS-v3.1.2/components/md5-min.js"></script>
+    -->
+    <!--NO.2 引入独立汇总（汇总文件是在组件一个或多个文件夹拼接后压缩的，引入汇总文件无需担心它的依赖）
+    <script src="CryptoJS-v3.1.2/rollups/aes.js"></script>
+    <script src="CryptoJS-v3.1.2/rollups/md5.js"></script>
+    -->
+
+    <!--若从github下载则引入以下文件即可代替上述所有（此为建议，可从bootcdn引入此文件）-->
+    <script src="crypto-js-3.1.9-1/crypto-js.js"></script>
+
+
+    <!--
+    引入RSA加密库！
+    关于jsencrypt.js库，可以自行下载或引入cdn，示例为bootcdn链接。
+    -->
+    <script src="https://cdn.bootcss.com/jsencrypt/3.0.0-rc.1/jsencrypt.min.js"></script>
+
+API:
+
+    > 函数: AESEncrypt、AESDecrypt、RSAEncrypt
+        函数功能和用法与Python版对应
+    > 类: EncryptedCommunicationBrowser -> (browserEncrypt, browserDecrypt)
+        亦对应Python版中EncryptedCommunicationClient，browserEncrypt和browserDecrypt方法也分别对应clientEncrypt和clientDecrypt。
+        差异在于：browserEncrypt必须传入有效的signIndex字段，不支持false和全部提交数据的加密。
+
+-----------------
+API Documentation
+-----------------
+
+.. automodule:: SecureHTTP
+    :members: RSAEncrypt, RSADecrypt, AESEncrypt, AESDecrypt, EncryptedCommunicationClient, EncryptedCommunicationServer, generate_rsa_keys, SignError, AESError, RSAError
+    :undoc-members:
+    :show-inheritance:
+    :noindex:
 
 --------
 更新日志

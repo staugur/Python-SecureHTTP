@@ -4,9 +4,8 @@
 <HEAD>
     <TITLE>AES加密解密</TITLE>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <script type="text/javascript" src="https://static.saintic.com/cdn/js/aes/jquery1.4.js"></script>
-    <script type="text/javascript" src="https://static.saintic.com/cdn/js/aes/crypto-js.js"></script>
-    <script type="text/javascript" src="https://static.saintic.com/cdn/js/aes/jquery.base64.min.js"></script>
+    <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://cdn.bootcss.com/crypto-js/3.1.9-1/crypto-js.min.js"></script>
 </HEAD>
 <script type="text/javascript">
     var key = CryptoJS.enc.Utf8.parse("secretsecretsecr");
@@ -22,7 +21,12 @@
             mode: CryptoJS.mode.CBC,
             padding: CryptoJS.pad.Pkcs7
         });
-        $("#encryptResult").val(encryptResult);
+        //hex格式密文
+        var ciphertext = encryptResult.ciphertext.toString();
+        console.log("encryptResult",ciphertext);
+        //hex转为base64
+        //CryptoJS.enc.Base64.stringify(CryptoJS.enc.Hex.parse(ciphertext));
+        $("#encryptResult").val(ciphertext);
     }
 
     /**
@@ -31,7 +35,11 @@
      */
     function decrypt() {
         var content = $("#decryptContent").val();
-        var bytes = CryptoJS.AES.decrypt(content.toString(), key, {
+        //接受hex格式密文
+        var encryptedHexStr = CryptoJS.enc.Hex.parse(content);
+        //变为base64
+        var srcs = CryptoJS.enc.Base64.stringify(encryptedHexStr);
+        var bytes = CryptoJS.AES.decrypt(srcs.toString(), key, {
             iv: key,
             mode: CryptoJS.mode.CBC,
             padding: CryptoJS.pad.Pkcs7
@@ -39,9 +47,6 @@
         var decryptResult = bytes.toString(CryptoJS.enc.Utf8);
         $("#decryptResult").val(decryptResult);
     }
-
-
-
 </script>
 
 <BODY>

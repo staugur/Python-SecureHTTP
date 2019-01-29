@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>B/S架构：AES+RSA前端加密后端解密示例</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <style type="text/css">
+        /* syntaxHighlight专用样式 */
+        pre {outline: 1px solid #ccc; padding: 5px; margin: 5px; }
+        .string { color: green; }
+        .number { color: darkorange; }
+        .boolean { color: blue; }
+        .null { color: magenta; }
+        .key { color: red; }
+    </style>
+</head>
+<body>
+    <h3>仅RSA加密关键字段示例：</h3>
+    <form id="form1">
+        username: <input id="username" name="username" type="text" value="admin"></input><br/>
+        password: <input id="password" name="password" type="password" value="admin"></input><br/>
+        <input id="submit" type="button" value="submit"/><br/>
+    </form>
+    <h3>RSA+AES完整示例（服务器原样返回加密数据）：</h3>
+    <div id="showResult"></div>
+    <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+    <!--引入AES加密库-->
+    <script src="https://cdn.bootcss.com/crypto-js/3.1.9-1/crypto-js.js"></script>
+    <!--引入RSA加密库-->
+    <script src="https://cdn.bootcss.com/jsencrypt/3.0.0-rc.1/jsencrypt.min.js"></script>
+    <script src="https://static.saintic.com/securehttp.js/v0.1.0/SecureHTTP.js"></script>
+    <script type="text/javascript">
+        function syntaxHighlight(json) {
+            //json格式化高亮显示到页面中
+            if (typeof json != 'string') {
+                json = JSON.stringify(json, undefined, 4);
+            }
+            json = json.replace(/&/g, '&').replace(/</g, '<').replace(/>/g, '>');
+            return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function(match) {
+                var cls = 'number';
+                if (/^"/.test(match)) {
+                    if (/:$/.test(match)) {
+                        cls = 'key';
+                    } else {
+                        cls = 'string';
+                    }
+                } else if (/true|false/.test(match)) {
+                    cls = 'boolean';
+                } else if (/null/.test(match)) {
+                    cls = 'null';
+                }
+                return '<span class="' + cls + '">' + match + '</span>';
+            });
+        }
+        var pubkey = `{{ pubkey }}`;
+        //RSA加密关键字段
+        $('#submit').click(function () {
+            var username = $('#username').val();
+            var password = $('#password').val();
+            $.ajax({
+                url: "{{ url_for('index') }}",
+                type: 'post',
+                data: {username: username, password: RSAEncrypt(pubkey, password)},
+                dataType: 'json',
+                success: function (res) {
+                    console.info(res);
+                    if (res.code===0) {
+                        alert("服务端解密成功，password解密结果是：" + res.password);
+                    } else {
+                        alert(res.msg);
+                    }
+                },
+                error: function (xhr) {
+                    alert('出错了');
+                }
+            });
+        });
+        //RSA+AES加密通信
+        var eb = new EncryptedCommunicationBrowser(pubkey);
+        var post = {
+            "a": 0,
+            "c": "c",
+            "b": 2.0,
+            "array": ["a", 1, null],
+            "dict": { "a": 1},
+            "d": null
+        };
+        $.ajax({
+            url: "{{ url_for('demo') }}",
+            type: 'post',
+            data: eb.browserEncrypt(post, "a,b,c"),
+            dataType: 'json',
+            success: function(res) {
+                console.info(res);
+                var resp = eb.browserDecrypt(res);
+                console.log(resp);
+                $("#showResult").html(syntaxHighlight(resp));
+            },
+            error: function(xhr) {
+                alert('出错了');
+            }
+        });
+    </script>
+</body>
+</html>
