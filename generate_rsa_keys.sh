@@ -7,7 +7,7 @@ function genRSA() {
     #参数：密钥长度
     length=$1
     if [ -z "$length" ];then
-        length=1024
+        length=2048
     fi
 
     #参数：定义名称
