@@ -272,7 +272,7 @@ Demo:
         <script src="https://static.saintic.com/securehttp.js/v0.1.0/SecureHTTP.js"></script>
         <script type="text/javascript">
             var eb = new EncryptedCommunicationBrowser(pubkey);
-            var post = {a:1, b:2, c:3}
+            var post = {a:1, b:2, c:3};
             $.ajax({
                 url: "SecureHTTP API URL",
                 type: 'post',

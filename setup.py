@@ -151,7 +151,7 @@ setup(
     version=version,
     url='https://github.com/staugur/Python-SecureHTTP',
     download_url="https://github.com/staugur/Python-SecureHTTP/releases/tag/v%s" % version,
-    license='MIT',
+    license='BSD 3-Clause',
     author=author,
     author_email=email,
     keywords=["RSA", "AES", "MD5", "HTTP"],
@@ -174,7 +174,7 @@ setup(
         'publish': PublishCommand,
     },
     classifiers=[
-        'Development Status :: 4 - Beta',
+        'Development Status :: 5 - Production/Stable',
         'Environment :: Web Environment',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',

@@ -309,7 +309,7 @@ class EncryptedCommunicationMix(object):
             comma_pat = re.compile(r"\s*,\s*")
             return [i for i in comma_pat.split(comma_str) if i]
         else:
-            return tuple()
+            return []
 
     def sign(self, parameters, meta={}):
         """ 参数签名，目前版本请勿嵌套无序数据类型（如嵌套dict、嵌套list中嵌套dict），否则可能造成签名失败！
