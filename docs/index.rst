@@ -52,7 +52,7 @@ Python-SecureHTTP
 简单示例
 ---------
 
-1. RSA加密、解密
+1. AES加密、解密
 
    .. code:: python
 
@@ -62,7 +62,7 @@ Python-SecureHTTP
        # 解密后的明文
        plaintext = AESDecrypt("ThisIsASecretKey", ciphertext)
 
-2. AES加密、解密
+2. RSA加密、解密
 
    .. code:: python
 
@@ -238,6 +238,8 @@ CDN: ``https://static.saintic.com/securehttp.js/{ version }/SecureHTTP.js``
 
     <!--若从github下载则引入以下文件即可代替上述所有（此为建议，可从bootcdn引入此文件）-->
     <script src="crypto-js-3.1.9-1/crypto-js.js"></script>
+    或
+    <script src="https://cdn.bootcss.com/crypto-js/3.1.9-1/crypto-js.js"></script>
 
 
     <!--
