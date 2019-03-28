@@ -26,7 +26,7 @@ $ make test
 
 **示例代码(Examples)：**
 
-1. RSA加密、解密
+1. AES加密、解密
 ```python
 from SecureHTTP import AESEncrypt, AESDecrypt
 # 加密后的密文
@@ -35,7 +35,7 @@ ciphertext = AESEncrypt('ThisIsASecretKey', 'Hello World!')
 plaintext = AESDecrypt("ThisIsASecretKey", ciphertext)
 ```
 
-2. AES加密、解密
+2. RSA加密、解密
 ```python
 from SecureHTTP import RSAEncrypt, RSADecrypt, generate_rsa_keys
 # 生成密钥对
