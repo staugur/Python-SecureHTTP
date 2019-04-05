@@ -1,3 +1,11 @@
+
+V0.4.0
+------
+
+Released in 2019-04-05
+
+-  fix & feat: set aes output/input format, support hex and base64
+
 V0.3.0
 ------
 

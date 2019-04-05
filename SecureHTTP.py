@@ -11,7 +11,7 @@
         密钥长度：128位
         密钥key和初始偏移向量iv一致
         补码方式：PKCS5Padding
-        加密结果编码方式：十六进制
+        加密结果编码方式：十六进制或base64编码
 
     2. RSA加解密::
 
@@ -24,7 +24,7 @@
         对请求参数或数据添加公共参数后排序再使用摘要算法签名
 
     :copyright: (c) 2019 by staugur.
-    :license: MIT, see LICENSE for more details.
+    :license: BSD, see LICENSE for more details.
 """
 
 import re
@@ -35,6 +35,7 @@ import copy
 import base64
 import hashlib
 from operator import mod
+from binascii import b2a_hex, a2b_hex
 try:
     from Cryptodome import Random
     from Cryptodome.PublicKey import RSA
@@ -44,7 +45,7 @@ except ImportError:
     from Crypto.PublicKey import RSA
     from Crypto.Cipher import AES, PKCS1_v1_5
 
-__version__ = "0.3.0"
+__version__ = "0.4.0"
 __author__ = "staugur <staugur@saintic.com>"
 __all__ = ["RSAEncrypt", "RSADecrypt", "AESEncrypt", "AESDecrypt", "EncryptedCommunicationClient", "EncryptedCommunicationServer", "generate_rsa_keys"]
 
@@ -60,6 +61,7 @@ else:
 
 
 class SecureHTTPException(Exception):
+    """异常基类"""
     pass
 
 
@@ -161,11 +163,13 @@ def RSADecrypt(privkey, ciphertext, passphrase=None):
     return plaintext.decode('utf-8')
 
 
-def AESEncrypt(key, plaintext):
+def AESEncrypt(key, plaintext, output="base64"):
     """AES加密
     :param key: str: 16位的密钥串
 
     :param plaintext: str: 将加密的明文消息
+
+    :param output: str: 输出是hex(十六进制)或base64(默认)
 
     :raises: AESError
 
@@ -177,17 +181,19 @@ def AESEncrypt(key, plaintext):
         generator = AES.new(key, AES.MODE_CBC, key[:AES.block_size])
         plaintext = PADDING(plaintext)
         ciphertext = generator.encrypt(plaintext.encode('utf-8'))
-        crypted_str = base64.b64encode(ciphertext)
+        crypted_str = b2a_hex(ciphertext) if output == "hex" else base64.b64encode(ciphertext)
         return crypted_str.decode('utf-8')
     else:
         raise AESError("Parameter error: key or ciphertext type is not valid, or key length is not valid")
 
 
-def AESDecrypt(key, ciphertext):
+def AESDecrypt(key, ciphertext, input="base64"):
     """AES解密
     :param key: str: 16位的密钥串
 
     :param ciphertext: str,unicode: 已加密的十六进制数据密文
+
+    :param input: str: 输入格式是hex(十六进制)或base64(默认)，对应AESEncrypt的output参数
 
     :raises: AESError
 
@@ -197,7 +203,7 @@ def AESDecrypt(key, ciphertext):
         key = key.encode("utf-8")
         generator = AES.new(key, AES.MODE_CBC, key[:AES.block_size])
         ciphertext += (len(ciphertext) % 4) * '='
-        decrpyt_bytes = base64.b64decode(ciphertext)
+        decrpyt_bytes = a2b_hex(ciphertext) if input == "hex" else base64.b64decode(ciphertext)
         msg = generator.decrypt(decrpyt_bytes)
         # 去除解码后的非法字符
         try:

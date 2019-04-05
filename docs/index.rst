@@ -43,10 +43,12 @@ Python-SecureHTTP
 测试用例
 ---------
 
+注意：完整的测试要求安装php、go以便运行多语言测试
+
 .. code:: bash
 
     $ git clone https://github.com/staugur/Python-SecureHTTP && cd Python-SecureHTTP
-    $ make test
+    $ make dev && make test
 
 
 简单示例
@@ -58,9 +60,9 @@ Python-SecureHTTP
 
        from SecureHTTP import AESEncrypt, AESDecrypt
        # 加密后的密文
-       ciphertext = AESEncrypt('ThisIsASecretKey', 'Hello World!')
+       ciphertext = AESEncrypt('ThisIsASecretKey', 'Hello World!', output="hex")
        # 解密后的明文
-       plaintext = AESDecrypt("ThisIsASecretKey", ciphertext)
+       plaintext = AESDecrypt("ThisIsASecretKey", ciphertext, input="hex)
 
 2. RSA加密、解密
 
@@ -210,7 +212,7 @@ SecureHTTP.js
 
 说明：JS版提供了一个 `SecureHTTP.js <https://github.com/staugur/Python-SecureHTTP/blob/master/SecureHTTP.js>`_ 文件封装了相关加密代码：包含AES加密解密、RSA加密解密、浏览器端加密通信封装(RSA+AES+MD5)。
 
-版本：(version) 当前版本 ``v0.1.0``，对应SecureHTTP的版本是 ``v0.2.0 ~ 0.3.0+``。
+版本：(version) 当前版本 ``v0.1.0``，对应SecureHTTP的版本是 ``v0.2.0+``。
 
 CDN: ``https://static.saintic.com/securehttp.js/{ version }/SecureHTTP.js``
 
@@ -219,7 +221,7 @@ CDN: ``https://static.saintic.com/securehttp.js/{ version }/SecureHTTP.js``
 .. code:: javascript
 
     <!--
-    引入AES加密库！
+    ### 引入AES加密库！
     关于crypto-js库，官方地址是：https://code.google.com/archive/p/crypto-js/，可是在墙外，上面给出的是github地址，两处下载的包有差异。
     -->
 
@@ -243,7 +245,7 @@ CDN: ``https://static.saintic.com/securehttp.js/{ version }/SecureHTTP.js``
 
 
     <!--
-    引入RSA加密库！
+    ### 引入RSA加密库！
     关于jsencrypt.js库，可以自行下载或引入cdn，示例为bootcdn链接。
     -->
     <script src="https://cdn.bootcss.com/jsencrypt/3.0.0-rc.1/jsencrypt.min.js"></script>
@@ -271,6 +273,7 @@ Demo:
         <script src="https://cdn.bootcss.com/crypto-js/3.1.9-1/crypto-js.js"></script>
         <!--引入RSA加密库-->
         <script src="https://cdn.bootcss.com/jsencrypt/3.0.0-rc.1/jsencrypt.min.js"></script>
+        <!--引入加密通信封装库-->
         <script src="https://static.saintic.com/securehttp.js/v0.1.0/SecureHTTP.js"></script>
         <script type="text/javascript">
             var eb = new EncryptedCommunicationBrowser(pubkey);
