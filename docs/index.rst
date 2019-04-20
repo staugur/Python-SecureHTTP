@@ -13,8 +13,8 @@ Python-SecureHTTP
 
 |PyPI| |Pyversions| |implementation|
 
-安装
-------
+安装(Installation)
+------------------
 
 *使用pip安装*：
 
@@ -40,8 +40,8 @@ Python-SecureHTTP
     **注意：PyCrypto/PyCryptodome将会在以后版本中弃用！**
 
 
-测试用例
----------
+测试用例(Test)
+---------------
 
 注意：完整的测试要求安装php、go以便运行多语言测试
 
@@ -51,8 +51,8 @@ Python-SecureHTTP
     $ make dev && make test
 
 
-简单示例
----------
+简单示例(Demo)
+---------------
 
 1. AES加密、解密
 
@@ -103,14 +103,13 @@ Python-SecureHTTP
 4. B/S加解密示例： `前端使用AES+RSA加密，后端解密 <https://github.com/staugur/Python-SecureHTTP/tree/master/examples/BS-RSA>`__
 
 
-加密传输通信的流程
-------------------
+加密传输通信的流程(Encrypted Transmission Process)
+--------------------------------------------------
 
-::
 
-    总体流程：客户端上传数据加密 ==> 服务端获取数据解密 ==> 服务端返回数据加密 ==> 客户端获取数据解密
+总体流程：客户端上传数据加密 ==> 服务端获取数据解密 ==> 服务端返回数据加密 ==> 客户端获取数据解密
 
-    NO.1 客户端上传数据加密流程::
+NO.1 客户端上传数据加密流程::
 
         1. 客户端随机产生一个16位的字符串，用以之后AES加密的秘钥，AESKey。
         2. 使用RSA对AESKey进行公钥加密，RSAKey。
@@ -118,48 +117,46 @@ Python-SecureHTTP
         4. 将明文的要上传的数据包(字典/Map)转为Json字符串，使用AESKey加密，得到JsonAESEncryptedData。
         5. 封装为{key : RSAKey, value : JsonAESEncryptedData}的字典上传服务器，服务器只需要通过key和value，然后解析，获取数据即可。
 
-    NO.2 服务端获取数据解密流程::
+NO.2 服务端获取数据解密流程::
 
         1. 获取到RSAKey后用服务器私钥解密，获取到AESKey
         2. 获取到JsonAESEncriptedData，使用AESKey解密，得到明文的客户端上传上来的数据。
         3. 验签，参考"加签、验签规则流程"
         4. 返回明文数据
 
-    NO.3 服务端返回数据加密流程::
+NO.3 服务端返回数据加密流程::
 
         1. 将要返回给客户端的数据(字典/Map)进行加签并将签名附属到数据中
         2. 上一步得到的数据转成Json字符串，用AESKey加密处理，记为AESEncryptedResponseData
         3. 封装数据{data : AESEncryptedResponseData}的形式返回给客户端
 
-    NO.4 客户端获取数据解密流程::
+NO.4 客户端获取数据解密流程::
 
         1. 客户端获取到数据后通过key为data得到服务器返回的已经加密的数据AESEncryptedResponseData
         2. 对AESEncryptedResponseData使用AESKey进行解密，得到明文服务器返回的数据。
 
-加签、验签规则流程
--------------------
+加签、验签规则流程(Signature Rule)
+----------------------------------
 
-::
+@加签、验签规则：
 
-    @加签、验签规则：
+        加签，即 ``EncryptedCommunicationClient.clientEncrypt`` 和 ``EncryptedCommunicationServer.serverEncrypt`` 方法，签名已经内置，支持传入 ``signIndex`` 参数生成不同签名。
 
-        加签，即`EncryptedCommunicationClient.clientEncrypt`和`EncryptedCommunicationServer.serverEncrypt`方法，签名已经内置，支持传入`signIndex`参数生成不同签名。
+        验签，即 ``EncryptedCommunicationClient.clientDecrypt`` 和 ``EncryptedCommunicationServer.serverDecrypt`` 方法，验签已经内置，验签失败触发 ``SignError`` 错误。
 
-        验签，即`EncryptedCommunicationClient.clientDecrypt`和`EncryptedCommunicationServer.serverDecrypt`方法，验签已经内置，验签失败触发`SignError`错误。
-
-        signIndex:
+        signIndex::
 
             False, 不签名、不验签
             None, 签名数据中所有字段(目前版本，如果嵌套了无序数据类型，可能会验签失败)
             str, 指定参与签名的字段，格式是"key1,key2"，这是目前建议的一种方法，只针对部分核心字段签名和验签
 
-    @签名步骤：
+@签名步骤：
 
         1. 构造规范化的请求字符串
 
             按照字母升序，对参数名称进行排序。
 
-        2. 排序后的参数以"参数名=值&"的形式连接，其中参数名和值要进行URL编码，使用UTF-8字符集，编码规则是：
+        2. 排序后的参数以"参数名=值&"的形式连接，其中参数名和值要进行URL编码，使用UTF-8字符集，编码规则是::
 
             2.1 对于字符 A-Z、a-z、0-9以及字符“-”、“_”、“.”、“~”不编码；
             2.2 对于其他字符编码成“%XY”的格式，其中XY是字符对应ASCII码的16进制表示。比如英文的双引号（”）对应的编码就是%22.
@@ -167,11 +164,11 @@ Python-SecureHTTP
 
         3. 对以上规范化的字符串使用摘要算法得到签名
 
-    @验签步骤：
+@验签步骤：
 
         验签同签名类似。
 
-    @注意事项：
+@注意事项：
 
         签名规则可以参考阿里云API签名
 
@@ -214,9 +211,14 @@ SecureHTTP.js
 
 版本：(version) 当前版本 ``v0.1.0``，对应SecureHTTP的版本是 ``v0.2.0+``。
 
-CDN: ``https://static.saintic.com/securehttp.js/{ version }/SecureHTTP.js``
+CDN: ``https://static.saintic.com/securehttp.js/v0.1.0/SecureHTTP.js``
 
 依赖：(github) `brix/crypto-js <https://github.com/brix/crypto-js>`_、`travist/jsencrypt <https://github.com/travist/jsencrypt>`_，前者是AES相关、后者是RSA相关。
+
+PS:
+  这只是用在浏览器环境，不适用于node.js开发中，如果您迫不及待使用node.js，依赖库可以使用crypto-js和node-jsencrypt，再行编写加密、解密等函数。
+
+  关于算法，请查看 `关于通信过程加密算法的说明。 <#api-documentation>`_
 
 .. code:: javascript
 
@@ -240,7 +242,7 @@ CDN: ``https://static.saintic.com/securehttp.js/{ version }/SecureHTTP.js``
 
     <!--若从github下载则引入以下文件即可代替上述所有（此为建议，可从bootcdn引入此文件）-->
     <script src="crypto-js-3.1.9-1/crypto-js.js"></script>
-    或
+    或引用cdn的：
     <script src="https://cdn.bootcss.com/crypto-js/3.1.9-1/crypto-js.js"></script>
 
 

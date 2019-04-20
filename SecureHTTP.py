@@ -8,8 +8,8 @@
     1. AES加解密::
 
         模式：CBC
-        密钥长度：128位
-        密钥key和初始偏移向量iv一致
+        密钥长度：128bit
+        密钥key要求16字节倍数，初始偏移向量iv是key前16位
         补码方式：PKCS5Padding
         加密结果编码方式：十六进制或base64编码
 
@@ -17,11 +17,11 @@
 
         算法：RSA
         填充：RSA_PKCS1_PADDING
-        密钥格式：符合PKCS#1规范，密钥对采用PEM形式
+        密钥格式：符合PKCS#1规范，密钥对采用PEM形式，公钥要求pkcs1或pkcs8格式，私钥要求pkcs1格式
 
     3. 签名::
 
-        对请求参数或数据添加公共参数后排序再使用摘要算法签名
+        对请求参数或数据添加公共参数后排序再使用摘要算法签名（MD5、SHA1等）
 
     :copyright: (c) 2019 by staugur.
     :license: BSD, see LICENSE for more details.
