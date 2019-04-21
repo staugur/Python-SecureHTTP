@@ -302,9 +302,9 @@ API Documentation
 -----------------
 
 PS:
-    接口中函数返回值，正常情况下，如果返回字符串则是经过解码的，Python2.7返回unicode，Python3.x返回bytes。
+    接口中函数返回值，正常情况下，如果返回字符串则是经过解码的，Python2.7返回unicode，Python3.x返回str。
 
-    另，RSADecrypt解密中，新增一个sentinel参数，关于此参数的建议，请参考：`Pycryptodomex接口文档 <https://www.pycryptodome.org/en/latest/src/cipher/pkcs1_v1_5.html?hide=0#Crypto.Cipher.PKCS1_v1_5.PKCS115_Cipher.decrypt>`_，注意文档中 ``Warning`` 部分。
+    另，RSADecrypt解密中，新增一个sentinel参数，一个挺重要的解密失败的标记，关于此参数的建议，请参考：`Pycryptodomex接口文档 <https://www.pycryptodome.org/en/latest/src/cipher/pkcs1_v1_5.html?hide=0#Crypto.Cipher.PKCS1_v1_5.PKCS115_Cipher.decrypt>`_，注意文档中 ``Warning`` 部分。
 
 .. automodule:: SecureHTTP
     :members: RSAEncrypt, RSADecrypt, AESEncrypt, AESDecrypt, EncryptedCommunicationClient, EncryptedCommunicationServer, generate_rsa_keys, SignError, AESError, RSAError

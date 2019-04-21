@@ -13,7 +13,10 @@ Python-SecureHTTP
 
 .. code:: bash
 
+    # 正式版(Release)
     $ pip install -U SecureHTTP
+    # 开发版(Dev)
+    $ pip install -U git+https://github.com/staugur/Python-SecureHTTP.git@master
 
 **示例代码(Examples)**
 
@@ -70,7 +73,7 @@ Python-SecureHTTP
 文档(Documentation)
 ~~~~~~~~~~~~~~~~~~~
 
-`中文(Chinese) <https://python-securehttp.readthedocs.io/zh_CN/latest/>`__
+`中文(Chinese) <https://python-securehttp.readthedocs.io>`__
 """
 
 import os

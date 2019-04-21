@@ -1,4 +1,13 @@
 
+V0.4.1
+------
+
+Released in 2019-04-21
+
+-  fix: 修复python2.7下RSAEncrypt的plaintext参数编码
+-  feat: 新增RSADecrypt参数sentinel
+-  docs: 更新js和api说明
+
 V0.4.0
 ------
 
