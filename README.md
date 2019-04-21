@@ -14,14 +14,15 @@
 # 正式版(Release)
 $ pip install -U SecureHTTP
 # 开发版(Dev)
-$ pip install -U git+https://github.com/staugur/Python-SecureHTTP.git
+$ pip install -U git+https://github.com/staugur/Python-SecureHTTP.git@master
 ```
 
 **测试用例(TestCase)：**
 
 ```bash
+# 温馨提示：运行完整测试需要php和go命令！
 $ git clone https://github.com/staugur/Python-SecureHTTP && cd Python-SecureHTTP
-$ make test
+$ make dev && make test
 ```
 
 **示例代码(Examples)：**
@@ -74,7 +75,7 @@ c2 = client.clientDecrypt(s2)
 
 ### 文档(Documentation)
 
-* [中文](https://python-securehttp.readthedocs.io/zh_CN/latest/)
+* [中文](https://python-securehttp.readthedocs.io/)
 
 
 ### 资源(Resources)

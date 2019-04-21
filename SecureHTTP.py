@@ -45,7 +45,7 @@ except ImportError:
     from Crypto.PublicKey import RSA
     from Crypto.Cipher import AES, PKCS1_v1_5
 
-__version__ = "0.4.0"
+__version__ = "0.4.1"
 __author__ = "staugur <staugur@saintic.com>"
 __all__ = ["RSAEncrypt", "RSADecrypt", "AESEncrypt", "AESDecrypt", "EncryptedCommunicationClient", "EncryptedCommunicationServer", "generate_rsa_keys"]
 
@@ -140,14 +140,14 @@ def RSAEncrypt(pubkey, plaintext):
 
     :returns: str,unicode: base64编码的字符串(utf8解码)
     """
-    if not PY2 and isinstance(plaintext, str):
+    if (not PY2 and isinstance(plaintext, str)) or (PY2 and isinstance(plaintext, unicode)):
         plaintext = plaintext.encode("utf-8")
     pubkey = RSA.importKey(pubkey)
     ciphertext = PKCS1_v1_5.new(pubkey).encrypt(plaintext)
     return base64.b64encode(ciphertext).decode('utf-8')
 
 
-def RSADecrypt(privkey, ciphertext, passphrase=None):
+def RSADecrypt(privkey, ciphertext, passphrase=None, sentinel="ERROR"):
     """RSA私钥解密
 
     :param privkey: str,bytes: pkcs1格式私钥
@@ -156,10 +156,12 @@ def RSADecrypt(privkey, ciphertext, passphrase=None):
 
     :param passphrase: str,bytes: 私钥保护的密码短语
 
+    :param sentinel: any type: 检测到错误时返回的标记，默认返回ERROR字符串
+
     :returns: str,unicode: 消息原文(utf8解码)
     """
     privkey = RSA.importKey(privkey, passphrase=passphrase)
-    plaintext = PKCS1_v1_5.new(privkey).decrypt(base64.b64decode(ciphertext), Random.new().read)
+    plaintext = PKCS1_v1_5.new(privkey).decrypt(base64.b64decode(ciphertext), sentinel)
     return plaintext.decode('utf-8')
 
 
@@ -207,7 +209,7 @@ def AESDecrypt(key, ciphertext, input="base64"):
         msg = generator.decrypt(decrpyt_bytes)
         # 去除解码后的非法字符
         try:
-            result = re.compile('[\\x00-\\x08\\x0b-\\x0c\\x0e-\\x1f\n\r\t]').sub('', msg.decode())
+            result = re.compile('[\\x00-\\x08\\x0b-\\x0c\\x0e-\\x1f\n\r\t]').sub('', msg.decode("utf-8"))
         except Exception:
             return False
         else:
