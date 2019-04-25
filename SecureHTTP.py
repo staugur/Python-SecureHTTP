@@ -481,7 +481,7 @@ class EncryptedCommunicationClient(EncryptedCommunicationMix):
         if encryptedRespData and isinstance(encryptedRespData, dict) and \
                 "data" in encryptedRespData:
             JsonAESEncryptedData = encryptedRespData["data"]
-            respData = json.loads(AESDecrypt(self.AESKey, JsonAESEncryptedData))
+            respData = json.loads(AESDecrypt(self.AESKey, JsonAESEncryptedData, output_type="str"))
             metaData = respData.pop("__meta__")
             Signature = metaData.pop("Signature")
             SignData = self.sign(respData, metaData)
@@ -520,7 +520,7 @@ class EncryptedCommunicationServer(EncryptedCommunicationMix):
             RSAKey = encryptedPostData["key"]
             self.AESKey = RSADecrypt(self.PrivateKey, RSAKey)
             JsonAESEncryptedData = encryptedPostData["value"]
-            postData = json.loads(AESDecrypt(self.AESKey, JsonAESEncryptedData))
+            postData = json.loads(AESDecrypt(self.AESKey, JsonAESEncryptedData, output_type="str"))
             metaData = postData.pop("__meta__")
             Signature = metaData.pop("Signature")
             SignData = self.sign(postData, metaData)

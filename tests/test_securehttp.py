@@ -5,7 +5,7 @@ import json
 import base64
 import unittest
 from webapp import app, privkey, pubkey
-from SecureHTTP import RSAEncrypt, RSADecrypt, AESEncrypt, AESDecrypt, EncryptedCommunicationClient, EncryptedCommunicationServer, PY2, generate_rsa_keys, required_string
+from SecureHTTP import RSAEncrypt, RSADecrypt, AESEncrypt, AESDecrypt, EncryptedCommunicationClient, EncryptedCommunicationServer, PY2, generate_rsa_keys, required_string, AESError
 from binascii import b2a_hex, a2b_hex
 
 
@@ -75,6 +75,11 @@ class UtilsTest(unittest.TestCase):
         self.assertEqual(to_encrypt, AESDecrypt(key, to_decrypt, output_type="str"))
         self.assertEqual(to_encrypt.encode("utf-8"), AESDecrypt(key, to_decrypt))
         self.assertEqual(to_encrypt.encode("utf-8"), AESDecrypt(key, base64.b64encode(a2b_hex(to_decrypt_16)).decode("utf-8")))
+        # 测试中文
+        self.assertRaises(AESError, AESEncrypt, '你好key','message')
+        k='x'*24
+        pt='你好'
+        self.assertEqual(pt, AESDecrypt(k, AESEncrypt(k, pt), output_type="str"))
 
     def test_generate_rsa_keys(self):
         (pub, pri) = generate_rsa_keys(incall=True)
