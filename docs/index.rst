@@ -23,7 +23,7 @@ Python-SecureHTTP
     # 正式版(Release)
     $ pip install -U SecureHTTP
     # 开发版(Dev)
-    $ pip install -U git+https://github.com/staugur/Python-SecureHTTP.git
+    $ pip install -U git+https://github.com/staugur/Python-SecureHTTP.git@master
 
 *关于依赖库*：
 
@@ -32,18 +32,13 @@ Python-SecureHTTP
     PyCryptodome是PyCrypto的一个分支，它为PyCrypto的最后一个正式版本（2.6.1）带来了一些增强功能，如支持pypy。
     PyCryptodomex即PyCryptodome，区别在于导入包名不同，前者导入包名是Cryptodome，后者是Crypto(同pycrypto)。
 
-    SecureHTTP首先尝试导入PyCryptodomex提供的包，导入失败后，再导入PyCrypto或PyCryptodome提供的包，所以您的系统中可以同时安装PyCrypto、PyCryptodomex，但不能同时安装PyCrypto、PyCryptodome，因为包名冲突。
-    您也可以卸载PyCryptodomex，这样SecureHTTP会尝试导入PyCrypto。
-
-    如果您的Python版本是3.+或使用PyPy解释器，建议使用PyCryptodome/PyCryptodomex。
-
-    **注意：PyCrypto/PyCryptodome将会在以后版本中弃用！**
+    **注意：v0.5.0开始，已经弃用PyCrypto/PyCryptodome！**
 
 
 测试用例(Test)
 ---------------
 
-注意：完整的测试要求安装php、go以便运行多语言测试
+*温馨提示：完整的测试要求安装php、go以便运行多语言测试*
 
 .. code:: bash
 
@@ -302,7 +297,9 @@ API Documentation
 -----------------
 
 PS:
-    接口中函数返回值，正常情况下，如果返回字符串则是经过解码的，Python2.7返回unicode，Python3.x返回str。
+    接口中函数返回值，正常情况下，Python2.7返回unicode，Python3.x返回str。
+
+    函数参数要求字符串的，一般建议py2中使用unicode，py3中使用bytes，请注意编码问题。
 
     另，RSADecrypt解密中，新增一个sentinel参数，一个挺重要的解密失败的标记，关于此参数的建议，请参考：`Pycryptodomex接口文档 <https://www.pycryptodome.org/en/latest/src/cipher/pkcs1_v1_5.html?hide=0#Crypto.Cipher.PKCS1_v1_5.PKCS115_Cipher.decrypt>`_，注意文档中 ``Warning`` 部分。
 
@@ -312,9 +309,9 @@ PS:
     :show-inheritance:
     :noindex:
 
---------
-更新日志
---------
+-------------------
+更新日志(CHANGELOG)
+-------------------
 
 .. include:: ../CHANGELOG.rst
 

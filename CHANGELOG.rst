@@ -1,4 +1,20 @@
 
+V0.5.0
+------
+
+Released in 2019-04-25
+
+- fix: 修复AES加密key长度问题 (#2)
+- feat: 新增 :func:`required_string` 转化不同py版本的字符串
+- feat: 新增AES加密参数，可以定义返回加密的字符串的类型
+- feat: 新增RSA加密输出/解密输入的编码参数(hex、base64)
+- feat: 更新 :class:`EncryptedCommunicationMix` 中生成AESKey的函数，现在生成的key默认为16字节
+- chore: AES加密解密函数调整
+- chore: 不再支持pycrypto和pycryptodome，一律使用pycryptodomex！
+- chore: Update README.md to README.rst
+- chore: 更新文档
+- todo: RSA加解密调整
+
 V0.4.1
 ------
 

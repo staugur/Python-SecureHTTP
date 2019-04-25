@@ -38,14 +38,18 @@ class MultiLanguagesTest(unittest.TestCase):
         to_decrypt_16 = '009d56f792cc5168ee5f31cfda5a8594'
 
         # 执行go程序获取打印结果并解析对比
-        godata = os.popen('go run %s/AES-CBC-PKCS5Padding/acp.go' %self.examplespath).read()
+        fp = os.popen('go run %s/AES-CBC-PKCS5Padding/acp.go' %self.examplespath)
+        godata = fp.read()
+        fp.close()
         godata = dict([ i.split(': ') for i in godata.split('\n') if i ])
         self.assertEqual(godata["plain"], godata["newPlain"])
         self.assertEqual(godata["newPlain"], to_encrypt)
         self.assertEqual(godata["cipher"], to_decrypt_16)
 
         # 执行php程序
-        phpdata = os.popen('php %s/AES-CBC-PKCS5Padding/acp.php' %self.examplespath).read().split("\n")
+        fp = os.popen('php %s/AES-CBC-PKCS5Padding/acp.php' %self.examplespath)
+        phpdata = fp.read().split("\n")
+        fp.close()
         self.assertEqual(phpdata[0], to_decrypt_16)
         self.assertEqual(phpdata[1], to_encrypt)
 
@@ -57,7 +61,7 @@ class MultiLanguagesTest(unittest.TestCase):
         self.assertEqual(pyencrypt16, phpdata[0])
 
         # 测试解密
-        pydecryptedSrc = AESDecrypt(key, AESEncrypt(key, to_encrypt))
+        pydecryptedSrc = AESDecrypt(key, AESEncrypt(key, to_encrypt), output_type="str")
         self.assertEqual(pydecryptedSrc, to_encrypt)
         self.assertEqual(pydecryptedSrc, phpdata[1])
         self.assertEqual(pydecryptedSrc, godata["newPlain"])
@@ -65,20 +69,24 @@ class MultiLanguagesTest(unittest.TestCase):
     def test_RSA(self):
         plaintext = "Message"
         ciphertext = RSAEncrypt(pubkey, plaintext)
-        self.assertEqual(plaintext, RSADecrypt(privkey, ciphertext))
+        self.assertEqual(plaintext.encode("utf-8"), RSADecrypt(privkey, ciphertext))
 
         # 执行go程序
-        godata = os.popen('go run %s/RSA-PKCS1-PEM/rsa-pkcs1.go' %self.examplespath).read()
+        fp = os.popen('go run %s/RSA-PKCS1-PEM/rsa-pkcs1.go' %self.examplespath)
+        godata = fp.read()
+        fp.close()
         godata = dict([ i.split(": ") for i in godata.split("\n") if i ])
         self.assertEqual(godata['rsa decrypted'], plaintext)
-        self.assertEqual(RSADecrypt(privkey, godata['rsa encrypt base64']), plaintext)
+        self.assertEqual(RSADecrypt(privkey, godata['rsa encrypt base64']), plaintext.encode("utf-8"))
 
         # 执行php程序
-        phpdata = os.popen('php %s/RSA-PKCS1-PEM/rsa-pkcs1.php' %self.examplespath).read()
+        fp = os.popen('php %s/RSA-PKCS1-PEM/rsa-pkcs1.php' %self.examplespath)
+        phpdata = fp.read()
+        fp.close()
         phpdata = phpdata.split("\n")
         phpdata = phpdata[phpdata.index("public key encrypt:"):]
         self.assertEqual(phpdata[3], plaintext)
-        self.assertEqual(RSADecrypt(privkey, phpdata[1]), plaintext)
+        self.assertEqual(RSADecrypt(privkey, phpdata[1]), plaintext.encode("utf-8"))
 
 if __name__ == '__main__':
     import unittest

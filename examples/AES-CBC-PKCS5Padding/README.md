@@ -1,7 +1,7 @@
 实现：
 ```
     算法：AES CBC模式
-    密钥长度：128位
+    密钥长度：128bit
     密钥key：secretsecretsecr
     初始偏移向量iv：secretsecretsecr
     补码方式：PKCS5Padding

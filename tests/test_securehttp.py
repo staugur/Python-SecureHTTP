@@ -5,7 +5,7 @@ import json
 import base64
 import unittest
 from webapp import app, privkey, pubkey
-from SecureHTTP import RSAEncrypt, RSADecrypt, AESEncrypt, AESDecrypt, EncryptedCommunicationClient, EncryptedCommunicationServer, PY2, generate_rsa_keys
+from SecureHTTP import RSAEncrypt, RSADecrypt, AESEncrypt, AESDecrypt, EncryptedCommunicationClient, EncryptedCommunicationServer, PY2, generate_rsa_keys, required_string
 from binascii import b2a_hex, a2b_hex
 
 
@@ -15,22 +15,50 @@ class UtilsTest(unittest.TestCase):
         self.debug = False
         self.client = app.test_client()
 
-    def test_generate_rsa_keys(self):
-        (pub, pri) = generate_rsa_keys(incall=True)
-        text = "helloWorld"
-        self.assertEqual(RSADecrypt(pri, RSAEncrypt(pub, text)), text)
-
-    def test_generate_rsa_keys_with_pass(self):
-        passphrase = b"abcde"
-        (pub, pri) = generate_rsa_keys(incall=True, length=1024, passphrase=passphrase)
-        text = "Hello World!"
-        self.assertEqual(RSADecrypt(pri, RSAEncrypt(pub, text), passphrase=passphrase), text)
-
-    def test_RSA(self):
-        plaintext = b"Message"
-        ciphertext = RSAEncrypt(pubkey, plaintext)
-        to_decrypt = RSADecrypt(privkey, ciphertext)
-        self.assertEqual(plaintext, to_decrypt.encode('utf-8'))
+    def test_require_string(self):
+        self.assertRaises(TypeError, required_string, [])
+        self.assertRaises(TypeError, required_string, {})
+        if PY2:
+            t1 = "abc"
+            self.assertIsInstance(required_string(t1), unicode)
+            self.assertIsInstance(required_string(t1, "str"), str)
+            self.assertRaises(ValueError, required_string, t1, "other")
+            self.assertEqual(t1, required_string(t1))
+            t2 = u"def"
+            self.assertIsInstance(required_string(t2), unicode)
+            self.assertIsInstance(required_string(t2, "str"), str)
+            self.assertEqual(t2, required_string(t2))
+            t3 = '你好'
+            self.assertIsInstance(required_string(t3), unicode)
+            self.assertIsInstance(required_string(t3, "str"), str)
+            self.assertEqual(t3.decode("utf-8"), required_string(t3))
+            t4 = u'你好'
+            self.assertIsInstance(required_string(t4), unicode)
+            self.assertIsInstance(required_string(t4, "str"), str)
+            self.assertEqual(t4, required_string(t4))
+            self.assertEqual(t4.encode("utf-8"), required_string(t4, "str"))
+        else:
+            t1 = "abc"
+            self.assertIsInstance(required_string(t1), bytes)
+            self.assertIsInstance(required_string(t1, "str"), str)
+            self.assertRaises(ValueError, required_string, t1, "unicode")
+            self.assertEqual(t1.encode("utf-8"), required_string(t1))
+            self.assertEqual(t1, required_string(t1, "str"))
+            t2 = b"def"
+            self.assertIsInstance(required_string(t2), bytes)
+            self.assertIsInstance(required_string(t2, "str"), str)
+            self.assertEqual(t2, required_string(t2))
+            self.assertEqual(t2.decode("utf-8"), required_string(t2, "str"))
+            t3 = '你好'
+            self.assertIsInstance(required_string(t3), bytes)
+            self.assertIsInstance(required_string(t3, "str"), str)
+            self.assertEqual(t3, required_string(t3, "str"))
+            self.assertEqual(t3.encode("utf-8"), required_string(t3))
+            t4 = '你好'.encode("utf-8")
+            self.assertIsInstance(required_string(t4), bytes)
+            self.assertIsInstance(required_string(t4, "str"), str)
+            self.assertEqual(t4, required_string(t4))
+            self.assertEqual(t4.decode("utf-8"), required_string(t4, "str"))
 
     def test_AES(self):
         key = "secretsecretsecr"
@@ -41,11 +69,79 @@ class UtilsTest(unittest.TestCase):
         self.assertEqual(to_decrypt, base64.b64encode(a2b_hex(to_decrypt_16)).decode("utf-8"))
         self.assertEqual(b2a_hex(base64.b64decode(to_decrypt)).decode("utf-8"), to_decrypt_16)
         # 测试加密
-        self.assertEqual(to_decrypt, AESEncrypt(key, to_encrypt))
+        self.assertEqual(to_decrypt.encode("utf-8"), AESEncrypt(key, to_encrypt))
         self.assertEqual(b2a_hex(base64.b64decode(to_decrypt)).decode("utf-8"), to_decrypt_16)
         # 测试解密
-        self.assertEqual(to_encrypt, AESDecrypt(key, to_decrypt))
-        self.assertEqual(to_encrypt, AESDecrypt(key, base64.b64encode(a2b_hex(to_decrypt_16)).decode("utf-8")))
+        self.assertEqual(to_encrypt, AESDecrypt(key, to_decrypt, output_type="str"))
+        self.assertEqual(to_encrypt.encode("utf-8"), AESDecrypt(key, to_decrypt))
+        self.assertEqual(to_encrypt.encode("utf-8"), AESDecrypt(key, base64.b64encode(a2b_hex(to_decrypt_16)).decode("utf-8")))
+
+    def test_generate_rsa_keys(self):
+        (pub, pri) = generate_rsa_keys(incall=True)
+        text = b"helloWorld"
+        self.assertEqual(RSADecrypt(pri, RSAEncrypt(pub, text)), text)
+
+    def test_generate_rsa_keys_with_pass(self):
+        passphrase = b"abcde"
+        (pub, pri) = generate_rsa_keys(incall=True, length=1024, passphrase=passphrase)
+        text = b"Hello World!"
+        self.assertEqual(RSADecrypt(pri, RSAEncrypt(pub, text), passphrase=passphrase), text)
+
+    def test_RSA(self):
+        plaintext = b"Message"
+        ciphertext = RSAEncrypt(pubkey, plaintext)
+        to_decrypt = RSADecrypt(privkey, ciphertext)
+        self.assertEqual(plaintext, to_decrypt)
+
+
+    def test_pkcs1(self):
+        privkey = '''-----BEGIN RSA PRIVATE KEY-----
+MIICXQIBAAKBgQDBVAczL3sjEVewm0+XWo/g1QbqM9veVKmETH37CqJrTB/TEg9t
+/HyRtPCUCnx6sj0xyQPTBRrKZn4D69zqNiRwBOPza6E8QhmUPTtRam4nFbUMj7n7
+97gcrUpT2GSdA94Ags3xB0ucCHi/nWEZyfUxGZjb6L3+3NgPoCQknwoV8wIDAQAB
+AoGAZ/g1qwxU76YK/7p20lHs4KAQCPH8w5PKWpD8i37LnGKjFtM2oxLPN1kUrLj6
++s1SZazSNrEfGEyIZrl45Chb7UcZu2B8ZNve7LpZAPrhkGXv48OJioTsVGYpBEYG
+viTcrBKHfNT9XfkDwSNR9y4mPDf92vpUYboNox9IcFESzPECQQDf9PDsDnd7zgzZ
+CGDCnWeVqS/+nEZtZckTlrzsajj/9UmvnvUgHS/o6eQZQPTroB74FMujLL9HShNI
+F75Mm+7LAkEA3P06ZW009rqvKf3g1E6sHEQvOp7rCD3grLbVSQ8Y9wogYDTZqON8
+VvrmawIBHfMkdlLCcU/+QsrWajIZkMOoeQJAHHSb0/J2ngVtPnpBCRlE2xA3J+ul
+SysepF2HvaY1fdglt6nDzYPH3ZkyQT8un22l4bGKuj3qQ92Wm5dgt40shwJBALJT
+sgzo3EWBjhovoX8RYTeKGiaO2RCUhjo5a9GB2l53kHqyCzaLI+o4mzmcq3QUocbN
+r9SqfX4+mlmlxhWYndkCQQCuA/8YrkMrQIZWlErBRldtV1gqoToyexsJjxAuLP0d
+XM5dHfZ/oq/dqXCUN/iMRG1qxaA7qT4kYb+n6Nb3JYxG
+-----END RSA PRIVATE KEY-----'''
+        pubkey = '''-----BEGIN RSA PUBLIC KEY-----
+MIGJAoGBAMFUBzMveyMRV7CbT5daj+DVBuoz295UqYRMffsKomtMH9MSD238fJG0
+8JQKfHqyPTHJA9MFGspmfgPr3Oo2JHAE4/NroTxCGZQ9O1FqbicVtQyPufv3uByt
+SlPYZJ0D3gCCzfEHS5wIeL+dYRnJ9TEZmNvovf7c2A+gJCSfChXzAgMBAAE=
+-----END RSA PUBLIC KEY-----'''
+        self.assertEqual(b'test', RSADecrypt(privkey, RSAEncrypt(pubkey, 'test')))
+        self.assertEqual(b'test', RSADecrypt(privkey.encode("utf-8"), RSAEncrypt(pubkey.encode("utf-8"), 'test')))
+
+    def test_pkcs8(self):
+        privkey = '''-----BEGIN RSA PRIVATE KEY-----
+MIICXQIBAAKBgQDBVAczL3sjEVewm0+XWo/g1QbqM9veVKmETH37CqJrTB/TEg9t
+/HyRtPCUCnx6sj0xyQPTBRrKZn4D69zqNiRwBOPza6E8QhmUPTtRam4nFbUMj7n7
+97gcrUpT2GSdA94Ags3xB0ucCHi/nWEZyfUxGZjb6L3+3NgPoCQknwoV8wIDAQAB
+AoGAZ/g1qwxU76YK/7p20lHs4KAQCPH8w5PKWpD8i37LnGKjFtM2oxLPN1kUrLj6
++s1SZazSNrEfGEyIZrl45Chb7UcZu2B8ZNve7LpZAPrhkGXv48OJioTsVGYpBEYG
+viTcrBKHfNT9XfkDwSNR9y4mPDf92vpUYboNox9IcFESzPECQQDf9PDsDnd7zgzZ
+CGDCnWeVqS/+nEZtZckTlrzsajj/9UmvnvUgHS/o6eQZQPTroB74FMujLL9HShNI
+F75Mm+7LAkEA3P06ZW009rqvKf3g1E6sHEQvOp7rCD3grLbVSQ8Y9wogYDTZqON8
+VvrmawIBHfMkdlLCcU/+QsrWajIZkMOoeQJAHHSb0/J2ngVtPnpBCRlE2xA3J+ul
+SysepF2HvaY1fdglt6nDzYPH3ZkyQT8un22l4bGKuj3qQ92Wm5dgt40shwJBALJT
+sgzo3EWBjhovoX8RYTeKGiaO2RCUhjo5a9GB2l53kHqyCzaLI+o4mzmcq3QUocbN
+r9SqfX4+mlmlxhWYndkCQQCuA/8YrkMrQIZWlErBRldtV1gqoToyexsJjxAuLP0d
+XM5dHfZ/oq/dqXCUN/iMRG1qxaA7qT4kYb+n6Nb3JYxG
+-----END RSA PRIVATE KEY-----'''
+        pubkey = '''-----BEGIN PUBLIC KEY-----
+MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDBVAczL3sjEVewm0+XWo/g1Qbq
+M9veVKmETH37CqJrTB/TEg9t/HyRtPCUCnx6sj0xyQPTBRrKZn4D69zqNiRwBOPz
+a6E8QhmUPTtRam4nFbUMj7n797gcrUpT2GSdA94Ags3xB0ucCHi/nWEZyfUxGZjb
+6L3+3NgPoCQknwoV8wIDAQAB
+-----END PUBLIC KEY-----'''
+        self.assertEqual(b'test', RSADecrypt(privkey, RSAEncrypt(pubkey, 'test')))
+        self.assertEqual(b'test', RSADecrypt(privkey.encode("utf-8"), RSAEncrypt(pubkey.encode("utf-8"), 'test')))
 
     def test_ec(self):
 
@@ -60,7 +156,7 @@ class UtilsTest(unittest.TestCase):
         self.assertRaises(TypeError, client.clientDecrypt, 'raise')
         self.assertRaises(TypeError, server.serverDecrypt, 'raise')
         self.assertRaises(ValueError, server.serverEncrypt, 'raise')
-        self.assertEqual(len(client.AESKey), 32)
+        self.assertEqual(len(client.AESKey), 16)
         # test aam
         self.assertEqual(client.abstract_algorithm_mapping("sha1")("123"), client.sha1("123"))
 

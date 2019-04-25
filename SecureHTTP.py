@@ -8,24 +8,34 @@
     1. AES加解密::
 
         模式：CBC
-        密钥长度：128bit
-        密钥key要求16字节倍数，初始偏移向量iv是key前16位
-        补码方式：PKCS5Padding
+        密钥长度：128,192,256bit
+        密钥key：16,24,32bytes（建议使用ASCII编码密钥），初始偏移向量iv固定为key前16个字节
+        补码方式：PKCS5Padding（在AES中理论上同PKCS7Padding）
         加密结果编码方式：十六进制或base64编码
 
     2. RSA加解密::
 
         算法：RSA
-        填充：RSA_PKCS1_PADDING
+        填充：RSA_PKCS5_PADDING
         密钥格式：符合PKCS#1规范，密钥对采用PEM形式，公钥要求pkcs1或pkcs8格式，私钥要求pkcs1格式
 
     3. 签名::
 
-        对请求参数或数据添加公共参数后排序再使用摘要算法签名（MD5、SHA1等）
+        可选对请求参数或数据添加公共参数后排序再使用摘要算法签名（MD5、SHA1等）
+
+    关于参数中字符串说明，若无指定，则：
+
+        - py2: str, unicode
+        - py3: str, bytes
 
     :copyright: (c) 2019 by staugur.
-    :license: BSD, see LICENSE for more details.
+    :license: BSD 3-Clause, see LICENSE for more details.
 """
+
+__version__ = "0.5.0"
+__author__ = "staugur <staugur@saintic.com>"
+__all__ = ["RSAEncrypt", "RSADecrypt", "AESEncrypt", "AESDecrypt",
+           "EncryptedCommunicationClient", "EncryptedCommunicationServer", "generate_rsa_keys"]
 
 import re
 import sys
@@ -34,30 +44,18 @@ import time
 import copy
 import base64
 import hashlib
-from operator import mod
 from binascii import b2a_hex, a2b_hex
-try:
-    from Cryptodome import Random
-    from Cryptodome.PublicKey import RSA
-    from Cryptodome.Cipher import AES, PKCS1_v1_5
-except ImportError:
-    from Crypto import Random
-    from Crypto.PublicKey import RSA
-    from Crypto.Cipher import AES, PKCS1_v1_5
-
-__version__ = "0.4.1"
-__author__ = "staugur <staugur@saintic.com>"
-__all__ = ["RSAEncrypt", "RSADecrypt", "AESEncrypt", "AESDecrypt", "EncryptedCommunicationClient", "EncryptedCommunicationServer", "generate_rsa_keys"]
+from Cryptodome.PublicKey import RSA
+from Cryptodome.Cipher import AES, PKCS1_v1_5
+from Cryptodome.Random import get_random_bytes
+from Cryptodome.Util.Padding import pad, unpad
 
 PY2 = sys.version_info[0] == 2
 if PY2:
     from urllib import quote
-    string_types = (str, unicode)
-    public_key_prefix = u"-----BEGIN RSA PUBLIC KEY-----"
 else:
     from urllib.request import quote
-    string_types = (str,)
-    public_key_prefix = b"-----BEGIN RSA PUBLIC KEY-----"
+    basestring = (str, bytes)
 
 
 class SecureHTTPException(Exception):
@@ -78,6 +76,50 @@ class AESError(SecureHTTPException):
 class RSAError(SecureHTTPException):
     """RSA异常：密钥错误、加密解密错误"""
     pass
+
+
+def required_string(string, dst_type=None):
+    """Automatically adapts and returns the required string.
+
+    :param: string: str,unicode,bytes: Any string for py2, py3+
+
+    :param: dst_type: basestring: Required string type, but other string type. Default: unicode for py2, bytes for py3+
+
+    :returns: source string(with dst_type)
+
+    .. versionadded:: 0.5.0
+    """
+    if isinstance(string, basestring):
+        if PY2:
+            if not dst_type or dst_type == "unicode":
+                # py2 default string type: unicode
+                if isinstance(string, unicode):
+                    return string
+                else:
+                    return string.decode('utf-8')
+            elif dst_type == "str" or dst_type == "bytes":
+                if isinstance(string, str):
+                    return string
+                else:
+                    return string.encode('utf-8')
+            else:
+                raise ValueError("The param dst_type error, require unicode or str in py2")
+        else:
+            if not dst_type or dst_type == "bytes":
+                # py3 default string type: bytes
+                if isinstance(string, bytes):
+                    return string
+                else:
+                    return string.encode("utf-8")
+            elif dst_type == "str":
+                if isinstance(string, str):
+                    return string
+                else:
+                    return string.decode("utf-8")
+            else:
+                raise ValueError("The param dst_type error, require str or bytes in py3")
+    else:
+        raise TypeError("The param string type error, require %s" % basestring)
 
 
 def generate_rsa_keys(incall=False, length=2048, passphrase=None):
@@ -131,23 +173,26 @@ def generate_rsa_keys(incall=False, length=2048, passphrase=None):
         return (public_key, private_key)
 
 
-def RSAEncrypt(pubkey, plaintext):
+def RSAEncrypt(pubkey, plaintext, output="base64"):
     """RSA公钥加密
 
     :param pubkey: str,bytes: pkcs1或pkcs8格式公钥
 
     :param plaintext: str,bytes: 准备加密的文本消息
 
-    :returns: str,unicode: base64编码的字符串(utf8解码)
+    :param output: str: Output format: base64 (default), hex (hexadecimal)
+
+    :returns: str,unicode: base64编码的字符串
     """
     if (not PY2 and isinstance(plaintext, str)) or (PY2 and isinstance(plaintext, unicode)):
         plaintext = plaintext.encode("utf-8")
     pubkey = RSA.importKey(pubkey)
     ciphertext = PKCS1_v1_5.new(pubkey).encrypt(plaintext)
-    return base64.b64encode(ciphertext).decode('utf-8')
+    crypted_str = b2a_hex(ciphertext) if output == "hex" else base64.b64encode(ciphertext)
+    return crypted_str
 
 
-def RSADecrypt(privkey, ciphertext, passphrase=None, sentinel="ERROR"):
+def RSADecrypt(privkey, ciphertext, passphrase=None, sentinel="ERROR", input="base64"):
     """RSA私钥解密
 
     :param privkey: str,bytes: pkcs1格式私钥
@@ -158,64 +203,73 @@ def RSADecrypt(privkey, ciphertext, passphrase=None, sentinel="ERROR"):
 
     :param sentinel: any type: 检测到错误时返回的标记，默认返回ERROR字符串
 
-    :returns: str,unicode: 消息原文(utf8解码)
+    :param input: str: Input format: base64 (default) or hex (hexadecimal), refer to the output parameter of :func:`RSAEncrypt`
+
+    :returns: str,unicode: 消息原文
     """
     privkey = RSA.importKey(privkey, passphrase=passphrase)
-    plaintext = PKCS1_v1_5.new(privkey).decrypt(base64.b64decode(ciphertext), sentinel)
-    return plaintext.decode('utf-8')
+    ciphertext = a2b_hex(ciphertext) if input == "hex" else base64.b64decode(ciphertext)
+    plaintext = PKCS1_v1_5.new(privkey).decrypt(ciphertext, sentinel)
+    return plaintext
 
 
-def AESEncrypt(key, plaintext, output="base64"):
-    """AES加密
-    :param key: str: 16位的密钥串
+def AESEncrypt(key, plaintext, output="base64", output_type=None):
+    """AES Encryption Function.
 
-    :param plaintext: str: 将加密的明文消息
+    :param key: basestring: 16 24 32 bytes with ASCII.
 
-    :param output: str: 输出是hex(十六进制)或base64(默认)
+    :param plaintext: basestring: Plaintext message to be encrypted
 
-    :raises: AESError
+    :param output: str: Output format: base64 (default), hex (hexadecimal)
 
-    :returns: str,unicode: 加密后的十六进制
+    :param output_type: basestring: The type of encrypted string to be output, refer to the dst_type parameter of :func:`required_string` 
+
+    :raises: AESError,ValueError
+
+    :returns: Encrypted ciphertext
     """
-    if key and isinstance(key, string_types) and mod(len(key), 16) == 0 and plaintext and isinstance(plaintext, string_types):
-        def PADDING(s): return s + (AES.block_size - len(s) % AES.block_size) * chr(AES.block_size - len(s) % AES.block_size)
-        key = key.encode("utf-8")
-        generator = AES.new(key, AES.MODE_CBC, key[:AES.block_size])
-        plaintext = PADDING(plaintext)
-        ciphertext = generator.encrypt(plaintext.encode('utf-8'))
+    if key and plaintext:
+        key = required_string(key, "bytes")
+        if len(key) not in AES.key_size:
+            raise AESError("The key type error, resulting in length illegality")
+        #: Pad fill requires bytes type
+        padding = pad(required_string(plaintext, "bytes"), AES.block_size)
+        #: Encrypted in CBC mode, iv is fixed to the first 16 characters of the key
+        aes = AES.new(key, AES.MODE_CBC, key[:16])
+        ciphertext = aes.encrypt(padding)
         crypted_str = b2a_hex(ciphertext) if output == "hex" else base64.b64encode(ciphertext)
-        return crypted_str.decode('utf-8')
+        return required_string(crypted_str, output_type)
     else:
-        raise AESError("Parameter error: key or ciphertext type is not valid, or key length is not valid")
+        raise AESError("The key or plaintext is not valid")
 
 
-def AESDecrypt(key, ciphertext, input="base64"):
-    """AES解密
-    :param key: str: 16位的密钥串
+def AESDecrypt(key, ciphertext, input="base64", output_type=None):
+    """AES Decryption Function.
 
-    :param ciphertext: str,unicode: 已加密的十六进制数据密文
+    :param key: basestring: Refer to the key parameter of :func:`AESEncrypt`
 
-    :param input: str: 输入格式是hex(十六进制)或base64(默认)，对应AESEncrypt的output参数
+    :param ciphertext: basestring: Ciphertext message to be decrypted
 
-    :raises: AESError
+    :param input: str: Input format: base64 (default) or hex (hexadecimal), refer to the output parameter of :func:`AESEncrypt`
 
-    :returns: str,bool(False): 返回False时说明解密失败，成功则返回数据
+    :param output_type: basestring: The type of decrypted string to be output, refer to the dst_type parameter of :func:`required_string` 
+
+    :raises: AESError,binascii.Error,ValueError,TypeError
+
+    :returns: Decrypted plaintext
     """
-    if key and isinstance(key, string_types) and mod(len(key), 16) == 0 and ciphertext and isinstance(ciphertext, string_types):
-        key = key.encode("utf-8")
-        generator = AES.new(key, AES.MODE_CBC, key[:AES.block_size])
-        ciphertext += (len(ciphertext) % 4) * '='
-        decrpyt_bytes = a2b_hex(ciphertext) if input == "hex" else base64.b64decode(ciphertext)
-        msg = generator.decrypt(decrpyt_bytes)
-        # 去除解码后的非法字符
-        try:
-            result = re.compile('[\\x00-\\x08\\x0b-\\x0c\\x0e-\\x1f\n\r\t]').sub('', msg.decode("utf-8"))
-        except Exception:
-            return False
-        else:
-            return result
+    if key and ciphertext:
+        key = required_string(key, "bytes")
+        if len(key) not in AES.key_size:
+            raise AESError("The key type error, resulting in length illegality")
+        #: Encrypted in CBC mode, iv is fixed to the first 16 characters of the key
+        aes = AES.new(key, AES.MODE_CBC, key[:16])
+        ciphertext = a2b_hex(ciphertext) if input == "hex" else base64.b64decode(ciphertext)
+        #: Remove fill
+        plaintext = unpad(aes.decrypt(ciphertext), AES.block_size)
+        return required_string(plaintext, output_type)
     else:
-        raise AESError("Parameter error: key or ciphertext type is not valid, or key length is not valid")
+        raise AESError("The key or plaintext is not valid")
 
 
 class EncryptedCommunicationMix(object):
@@ -251,6 +305,11 @@ class EncryptedCommunicationMix(object):
         1. 客户端获取到数据后通过key为data得到服务器返回的已经加密的数据AESEncryptedResponseData
         2. 对AESEncryptedResponseData使用AESKey进行解密，得到明文服务器返回的数据。
     """
+
+    #: Set the length of the byte to generate the AESKey
+    #:
+    #: .. versionadded:: 0.5.0
+    BS = AES.block_size
 
     def get_current_timestamp(self):
         """ UTC时间 """
@@ -300,11 +359,11 @@ class EncryptedCommunicationMix(object):
         return mapping.get(algorithm.lower(), self.md5)
 
     def genAesKey(self):
-        """生成AES密钥，长度32
+        """生成AES密钥，32字节
 
         :returns: str
         """
-        return self.md5(Random.new().read(AES.block_size))
+        return get_random_bytes(self.BS)
 
     def conversionComma(self, comma_str):
         """将字符串comma_str使用正则以逗号分隔
@@ -313,8 +372,9 @@ class EncryptedCommunicationMix(object):
 
         :return: list
         """
-        if comma_str and isinstance(comma_str, string_types):
+        if comma_str and isinstance(comma_str, basestring):
             comma_pat = re.compile(r"\s*,\s*")
+            comma_str = required_string(comma_str, "str")
             return [i for i in comma_pat.split(comma_str) if i]
         else:
             return []
@@ -328,7 +388,7 @@ class EncryptedCommunicationMix(object):
 
         :raises: TypeError
 
-        :returns: md5 message(str) or None
+        :returns: sign message(str) or None
         """
         if isinstance(parameters, dict) and isinstance(meta, dict):
             signIndex = meta.get("SignatureIndex", None)
@@ -336,7 +396,7 @@ class EncryptedCommunicationMix(object):
             # 重新定义要加签的dict
             if signIndex is False:
                 return
-            elif signIndex and isinstance(signIndex, string_types):
+            elif signIndex and isinstance(signIndex, basestring):
                 signIndex = self.conversionComma(signIndex)
                 data = dict()
                 for k in signIndex:
@@ -406,7 +466,7 @@ class EncryptedCommunicationClient(EncryptedCommunicationMix):
         # 对请求数据填充元信息
         postData.update(__meta__=metaData)
         # 使用AES加密请求数据
-        JsonAESEncryptedData = AESEncrypt(self.AESKey, json.dumps(postData, separators=(',', ':')))
+        JsonAESEncryptedData = AESEncrypt(self.AESKey, json.dumps(postData, separators=(',', ':')), output_type="str")
         return dict(key=RSAKey, value=JsonAESEncryptedData)
 
     def clientDecrypt(self, encryptedRespData):
@@ -490,7 +550,7 @@ class EncryptedCommunicationServer(EncryptedCommunicationMix):
                 metaData = dict(Timestamp=self.get_current_timestamp(), SignatureVersion="v1", SignatureMethod=signargs.get("signMethod", "md5"), SignatureIndex=signargs.get("signIndex", None))
                 metaData.update(Signature=self.sign(respData, metaData))
                 respData.update(__meta__=metaData)
-                JsonAESEncryptedData = AESEncrypt(self.AESKey, json.dumps(respData, separators=(',', ':')))
+                JsonAESEncryptedData = AESEncrypt(self.AESKey, json.dumps(respData, separators=(',', ':')), output_type="str")
                 return dict(data=JsonAESEncryptedData)
             else:
                 raise TypeError("Invalid resp data")
