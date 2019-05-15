@@ -10,7 +10,7 @@
         模式：CBC
         密钥长度：128,192,256bit
         密钥key：16,24,32bytes（建议使用ASCII编码密钥），初始偏移向量iv固定为key前16个字节
-        补码方式：PKCS5Padding（在AES中理论上同PKCS7Padding）
+        补码方式：PKCS7Padding（在AES中理论上同PKCS5Padding）
         加密结果编码方式：十六进制或base64编码
 
     2. RSA加解密::
@@ -35,7 +35,7 @@
 __version__ = "0.5.0"
 __author__ = "staugur <staugur@saintic.com>"
 __all__ = ["RSAEncrypt", "RSADecrypt", "AESEncrypt", "AESDecrypt",
-           "EncryptedCommunicationClient", "EncryptedCommunicationServer", "generate_rsa_keys"]
+            "EncryptedCommunicationClient", "EncryptedCommunicationServer", "generate_rsa_keys"]
 
 import re
 import sys

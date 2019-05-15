@@ -9,7 +9,7 @@ Released in 2019-04-25
 - feat: 新增AES加密参数，可以定义返回加密的字符串的类型
 - feat: 新增RSA加密输出/解密输入的编码参数(hex、base64)
 - feat: 更新 :class:`EncryptedCommunicationMix` 中生成AESKey的函数，现在生成的key默认为16字节
-- chore: AES加密解密函数调整
+- chore: AES加密解密函数调整，填充方法改为pkcs7，理论上兼容pkcs5，但可能会遇到与旧版本不兼容
 - chore: 不再支持pycrypto和pycryptodome，一律使用pycryptodomex！
 - chore: Update README.md to README.rst
 - chore: 更新文档
