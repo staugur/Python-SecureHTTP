@@ -3,7 +3,7 @@ Python-SecureHTTP
 
 通过使用RSA+AES让HTTP传输更加安全，即C/S架构的加密通信!(Make HTTP transmissions more secure via RSA+AES, encrypted communication for C/S architecture.)
 
-|Build Status| |Documentation Status| |codecov| |PyPI| |Pyversions| |Implementation| |link996|
+|Build Status| |Documentation Status| |codecov| |PyPI| |Pyversions| |Implementation|
 
 使用概述(Overview)
 ~~~~~~~~~~~~~~~~~~
