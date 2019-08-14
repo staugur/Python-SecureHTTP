@@ -11,7 +11,7 @@ python:
 sudo: enabled
 before_install:
   - sudo apt-get update
-  - sudo apt-get install -y php5-cli golang
+  - sudo apt-get install -y php7.0-cli golang
 install:
   - pip install setuptools twine wheel flask codecov rsa
   - make dev

@@ -93,8 +93,8 @@ Python-SecureHTTP
 
 欢迎提交PR、共同开发！
 
-.. |Build Status| image:: https://travis-ci.com/staugur/Python-SecureHTTP.svg?branch=master
-   :target: https://travis-ci.com/staugur/Python-SecureHTTP
+.. |Build Status| image:: https://travis-ci.org/staugur/Python-SecureHTTP.svg?branch=master
+   :target: https://travis-ci.org/staugur/Python-SecureHTTP
 .. |Documentation Status| image:: https://readthedocs.org/projects/python-securehttp/badge/?version=latest
    :target: https://python-securehttp.readthedocs.io/zh_CN/latest/?badge=latest
 .. |codecov| image:: https://codecov.io/gh/staugur/Python-SecureHTTP/branch/master/graph/badge.svg
