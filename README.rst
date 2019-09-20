@@ -3,7 +3,7 @@ Python-SecureHTTP
 
 通过使用RSA+AES让HTTP传输更加安全，即C/S架构的加密通信!(Make HTTP transmissions more secure via RSA+AES, encrypted communication for C/S architecture.)
 
-|Build Status| |Documentation Status| |codecov| |PyPI| |Pyversions| |Implementation|
+|Build Status| |Documentation Status| |codecov| |PyPI| |Pyversions|
 
 使用概述(Overview)
 ~~~~~~~~~~~~~~~~~~
@@ -79,7 +79,7 @@ Python-SecureHTTP
 文档(Documentation)
 ~~~~~~~~~~~~~~~~~~~
 
--  `中文 <https://python-securehttp.readthedocs.io/>`__
+-  `中文 <https://python-securehttp.rtfd.vip/>`__
 
 资源(Resources)
 ~~~~~~~~~~~~~~~
@@ -95,16 +95,11 @@ Python-SecureHTTP
 
 .. |Build Status| image:: https://travis-ci.org/staugur/Python-SecureHTTP.svg?branch=master
    :target: https://travis-ci.org/staugur/Python-SecureHTTP
-.. |Documentation Status| image:: https://readthedocs.org/projects/python-securehttp/badge/?version=latest
-   :target: https://python-securehttp.readthedocs.io/zh_CN/latest/?badge=latest
+.. |Documentation Status| image:: https://open.saintic.com/rtfd/badge/python-securehttp
+   :target: https://python-securehttp.rtfd.vip/zh_CN/latest/
 .. |codecov| image:: https://codecov.io/gh/staugur/Python-SecureHTTP/branch/master/graph/badge.svg
    :target: https://codecov.io/gh/staugur/Python-SecureHTTP
 .. |PyPI| image:: https://img.shields.io/pypi/v/SecureHTTP.svg?style=popout
    :target: https://pypi.org/project/SecureHTTP
 .. |Pyversions| image:: https://img.shields.io/pypi/pyversions/SecureHTTP.svg
    :target: https://pypi.org/project/SecureHTTP
-.. |Implementation| image:: https://img.shields.io/pypi/implementation/SecureHTTP.svg
-   :target: https://pypi.org/project/SecureHTTP
-.. |link996| image:: https://img.shields.io/badge/link-996.icu-red.svg
-   :target: https://996.icu
-   :alt: 996.ICU
