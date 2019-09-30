@@ -7,12 +7,16 @@
 Python-SecureHTTP
 =================
 
+.. toctree::
+    :maxdepth: 1
+
 .. currentmodule:: SecureHTTP
 
 通过使用RSA+AES让HTTP传输更加安全，即C/S架构的加密通信! (Make HTTP transmissions more secure via RSA+AES, encrypted communication for C/S architecture.)
 
 |PyPI| |Pyversions| |implementation|
 
+------------------
 安装(Installation)
 ------------------
 
@@ -35,6 +39,7 @@ Python-SecureHTTP
     **注意：v0.5.0开始，已经弃用PyCrypto/PyCryptodome！**
 
 
+---------------
 测试用例(Test)
 ---------------
 
@@ -45,7 +50,7 @@ Python-SecureHTTP
     $ git clone https://github.com/staugur/Python-SecureHTTP && cd Python-SecureHTTP
     $ make dev && make test
 
-
+---------------
 简单示例(Demo)
 ---------------
 
@@ -98,6 +103,7 @@ Python-SecureHTTP
 4. B/S加解密示例： `前端使用AES+RSA加密，后端解密 <https://github.com/staugur/Python-SecureHTTP/tree/master/examples/BS-RSA>`__
 
 
+--------------------------------------------------
 加密传输通信的流程(Encrypted Transmission Process)
 --------------------------------------------------
 
@@ -130,6 +136,7 @@ NO.4 客户端获取数据解密流程::
         1. 客户端获取到数据后通过key为data得到服务器返回的已经加密的数据AESEncryptedResponseData
         2. 对AESEncryptedResponseData使用AESKey进行解密，得到明文服务器返回的数据。
 
+----------------------------------
 加签、验签规则流程(Signature Rule)
 ----------------------------------
 
@@ -198,99 +205,11 @@ CLI Documentation
 
     generate_rsa_keys.sh 2048
 
--------------
+
 SecureHTTP.js
 -------------
 
-说明：JS版提供了一个 `SecureHTTP.js <https://github.com/staugur/Python-SecureHTTP/blob/master/SecureHTTP.js>`_ 文件封装了相关加密代码：包含AES加密解密、RSA加密解密、浏览器端加密通信封装(RSA+AES+MD5)。
-
-版本：(version) 当前版本 ``v0.1.0``，对应SecureHTTP的版本是 ``v0.2.0+``。
-
-CDN: ``https://static.saintic.com/securehttp.js/v0.1.0/SecureHTTP.js``
-
-依赖：(github) `brix/crypto-js <https://github.com/brix/crypto-js>`_、`travist/jsencrypt <https://github.com/travist/jsencrypt>`_，前者是AES相关、后者是RSA相关。
-
-PS:
-  这只是用在浏览器环境，不适用于node.js开发中，如果您迫不及待使用node.js，依赖库可以使用crypto-js和node-jsencrypt，再行编写加密、解密等函数。
-
-  关于算法，请查看 `关于通信过程加密算法的说明。 <#api-documentation>`_
-
-.. code:: javascript
-
-    <!--
-    ### 引入AES加密库！
-    关于crypto-js库，官方地址是：https://code.google.com/archive/p/crypto-js/，可是在墙外，上面给出的是github地址，两处下载的包有差异。
-    -->
-
-    <!--若从googlecode下载则可用以下两种方式引入：-->
-    <!--NO.1 引入组件源码
-    <script src="CryptoJS-v3.1.2/components/core-min.js"></script>
-    <script src="CryptoJS-v3.1.2/components/enc-base64-min.js"></script>
-    <script src="CryptoJS-v3.1.2/components/cipher-core-min.js"></script>
-    <script src="CryptoJS-v3.1.2/components/aes-min.js"></script>
-    <script src="CryptoJS-v3.1.2/components/md5-min.js"></script>
-    -->
-    <!--NO.2 引入独立汇总（汇总文件是在组件一个或多个文件夹拼接后压缩的，引入汇总文件无需担心它的依赖）
-    <script src="CryptoJS-v3.1.2/rollups/aes.js"></script>
-    <script src="CryptoJS-v3.1.2/rollups/md5.js"></script>
-    -->
-
-    <!--若从github下载则引入以下文件即可代替上述所有（此为建议，可从bootcdn引入此文件）-->
-    <script src="crypto-js-3.1.9-1/crypto-js.js"></script>
-    或引用cdn的：
-    <script src="https://cdn.bootcss.com/crypto-js/3.1.9-1/crypto-js.js"></script>
-
-
-    <!--
-    ### 引入RSA加密库！
-    关于jsencrypt.js库，可以自行下载或引入cdn，示例为bootcdn链接。
-    -->
-    <script src="https://cdn.bootcss.com/jsencrypt/3.0.0-rc.1/jsencrypt.min.js"></script>
-
-API:
-
-    > 函数: AESEncrypt、AESDecrypt、RSAEncrypt
-        函数功能和用法与Python版对应
-    > 类: EncryptedCommunicationBrowser -> (browserEncrypt, browserDecrypt)
-        亦对应Python版中EncryptedCommunicationClient，browserEncrypt和browserDecrypt方法也分别对应clientEncrypt和clientDecrypt。
-        差异在于：browserEncrypt必须传入有效的signIndex字段，暂不支持false和全部提交数据的加签。
-
-Demo:
-
-.. code:: html
-
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <title>SecureHTTP.js</title>
-    </head>
-    <body>
-        <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
-        <!--引入AES加密库-->
-        <script src="https://cdn.bootcss.com/crypto-js/3.1.9-1/crypto-js.js"></script>
-        <!--引入RSA加密库-->
-        <script src="https://cdn.bootcss.com/jsencrypt/3.0.0-rc.1/jsencrypt.min.js"></script>
-        <!--引入加密通信封装库-->
-        <script src="https://static.saintic.com/securehttp.js/v0.1.0/SecureHTTP.js"></script>
-        <script type="text/javascript">
-            var eb = new EncryptedCommunicationBrowser(pubkey);
-            var post = {a:1, b:2, c:3};
-            $.ajax({
-                url: "SecureHTTP API URL",
-                type: 'post',
-                data: eb.browserEncrypt(post, "a,b,c"),
-                dataType: 'json',
-                success: function(res) {
-                    var resp = eb.browserDecrypt(res);
-                    console.info(resp);
-                },
-                error: function(xhr) {
-                    alert('出错了');
-                }
-            });
-        </script>
-    </body>
-    </html>
+请参考： `SecureHTTP.js <https://docs.saintic.com/securehttp.js>`_
 
 -----------------
 API Documentation

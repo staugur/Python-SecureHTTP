@@ -87,6 +87,7 @@ Python-SecureHTTP
 -  GitHub https://github.com/staugur/Python-SecureHTTP
 -  Author https://www.saintic.com
 -  Issues https://github.com/staugur/Python-SecureHTTP/issues
+-  JavaScript(Node) https://github.com/staugur/SecureHTTP.js
 
 说在后面(END)
 ~~~~~~~~~~~~~
